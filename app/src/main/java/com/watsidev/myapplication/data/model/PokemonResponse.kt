@@ -10,7 +10,15 @@ data class PokemonResponse(
     val height: Int,
     val weight: Int,
     val types: List<TypeSlot>,
-    val sprites: Sprites
+    val sprites: Sprites,
+    val stats: List<StatSlot>
+)
+
+@JsonClass(generateAdapter = true)
+data class StatSlot(
+    @Json(name = "base_stat") val baseStat: Int,
+    val effort: Int,
+    val stat: NamedApiResource
 )
 
 @JsonClass(generateAdapter = true)
@@ -45,7 +53,14 @@ data class PokemonSpeciesResponse(
     val id: Int,
     val name: String,
     val generation: NamedApiResource,
-    @Json(name = "evolution_chain") val evolutionChain: APIResource
+    @Json(name = "evolution_chain") val evolutionChain: APIResource,
+    val genera: List<Genus>
+)
+
+@JsonClass(generateAdapter = true)
+data class Genus(
+    val genus: String,
+    val language: NamedApiResource
 )
 
 @JsonClass(generateAdapter = true)
@@ -63,5 +78,13 @@ data class EvolutionChainResponse(
 data class ChainLink(
     @Json(name = "is_baby") val isBaby: Boolean,
     val species: NamedApiResource,
-    @Json(name = "evolves_to") val evolvesTo: List<ChainLink>
+    @Json(name = "evolves_to") val evolvesTo: List<ChainLink>,
+    @Json(name = "evolution_details") val evolutionDetails: List<EvolutionDetail>? = null
+)
+
+@JsonClass(generateAdapter = true)
+data class EvolutionDetail(
+    val trigger: NamedApiResource,
+    @Json(name = "min_level") val minLevel: Int? = null,
+    val item: NamedApiResource? = null
 )

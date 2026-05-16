@@ -18,6 +18,7 @@ import com.watsidev.myapplication.ui.game.GameScreen
 import com.watsidev.myapplication.ui.game.GameViewModel
 import com.watsidev.myapplication.ui.home.HomeScreen
 import com.watsidev.myapplication.ui.pokedex.PokedexScreen
+import com.watsidev.myapplication.ui.pokedex.PokemonDetailScreen
 import com.watsidev.myapplication.ui.settings.SettingsScreen
 import com.watsidev.myapplication.ui.theme.MyApplicationTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -73,6 +74,16 @@ class MainActivity : ComponentActivity() {
                     }
                     composable("pokedex") {
                         PokedexScreen(
+                            onNavigateBack = { navController.popBackStack() },
+                            onPokemonClick = { name ->
+                                navController.navigate("pokemon_detail/$name")
+                            }
+                        )
+                    }
+                    composable("pokemon_detail/{pokemonName}") { backStackEntry ->
+                        val pokemonName = backStackEntry.arguments?.getString("pokemonName") ?: ""
+                        PokemonDetailScreen(
+                            pokemonName = pokemonName,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }

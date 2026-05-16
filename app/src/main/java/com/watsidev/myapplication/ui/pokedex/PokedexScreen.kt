@@ -1,6 +1,7 @@
 package com.watsidev.myapplication.ui.pokedex
 
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -29,7 +30,8 @@ import java.util.Locale
 @Composable
 fun PokedexScreen(
     viewModel: PokedexViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onPokemonClick: (String) -> Unit
 ) {
     Log.d("PokedexScreen", "Composition started")
     val uiState by viewModel.uiState.collectAsState()
@@ -105,7 +107,12 @@ fun PokedexScreen(
                     ) { index, name ->
                         val id = index + 1
                         val isDiscovered = uiState.discoveredIds.contains(id)
-                        PokedexEntry(id = id, name = name, isDiscovered = isDiscovered)
+                        PokedexEntry(
+                            id = id, 
+                            name = name, 
+                            isDiscovered = isDiscovered,
+                            onClick = { onPokemonClick(name) }
+                        )
                     }
                 }
             }
@@ -151,12 +158,14 @@ fun DiscoveryProgress(discovered: Int, total: Int) {
 }
 
 @Composable
-fun PokedexEntry(id: Int, name: String, isDiscovered: Boolean) {
+fun PokedexEntry(id: Int, name: String, isDiscovered: Boolean, onClick: () -> Unit) {
     // Official artwork URL construction
     val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
     
     Card(
-        modifier = Modifier.aspectRatio(1f),
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clickable(enabled = isDiscovered, onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isDiscovered) MaterialTheme.colorScheme.surfaceVariant else Color.LightGray.copy(alpha = 0.3f)

@@ -3,13 +3,10 @@ package com.watsidev.myapplication.data.repository
 import android.util.Log
 import com.watsidev.myapplication.data.local.DiscoveryDao
 import com.watsidev.myapplication.data.local.DiscoveryEntity
-import com.watsidev.myapplication.data.model.Item
-import com.watsidev.myapplication.data.model.Pokemon
+import com.watsidev.myapplication.data.model.*
 import com.watsidev.myapplication.data.remote.NamedApiResourceShort
 import com.watsidev.myapplication.data.remote.PokeApiService
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
@@ -68,6 +65,7 @@ class PokemonRepositoryImpl @Inject constructor(
             val evolutionChain = apiService.getEvolutionChain(chainId)
             
             val stage = findEvolutionStage(evolutionChain.chain, response.name)
+            val evolutionSteps = flattenEvolutionChain(evolutionChain.chain)
 
             // Extract generation number from generation name
             val genName = speciesResponse.generation.name
@@ -84,6 +82,8 @@ class PokemonRepositoryImpl @Inject constructor(
                 else -> 1
             }
 
+            val category = speciesResponse.genera.find { it.language.name == "en" }?.genus ?: ""
+
             val pokemon = Pokemon(
                 id = response.id,
                 name = response.name,
@@ -92,7 +92,10 @@ class PokemonRepositoryImpl @Inject constructor(
                 types = response.types.map { it.type.name },
                 evolutionaryStage = stage,
                 generation = genNumber,
-                imageUrl = response.sprites.other.officialArtwork.frontDefault
+                imageUrl = response.sprites.other.officialArtwork.frontDefault,
+                category = category,
+                stats = response.stats.map { PokemonStat(it.stat.name, it.baseStat) },
+                evolutionChain = evolutionSteps
             )
             
             pokemonCache[name] = pokemon
@@ -112,13 +115,35 @@ class PokemonRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun findEvolutionStage(link: com.watsidev.myapplication.data.model.ChainLink, name: String, currentStage: Int = 1): Int {
+    private fun findEvolutionStage(link: ChainLink, name: String, currentStage: Int = 1): Int {
         if (link.species.name == name) return currentStage
         for (nextLink in link.evolvesTo) {
             val stage = findEvolutionStage(nextLink, name, currentStage + 1)
             if (stage != -1) return stage
         }
         return -1
+    }
+
+    private fun flattenEvolutionChain(link: ChainLink): List<EvolutionStep> {
+        val steps = mutableListOf<EvolutionStep>()
+        
+        fun processLink(current: ChainLink) {
+            val id = current.species.url.split("/").filter { it.isNotEmpty() }.last().toInt()
+            val detail = current.evolutionDetails?.firstOrNull()
+            
+            steps.add(EvolutionStep(
+                id = id,
+                name = current.species.name,
+                trigger = detail?.trigger?.name ?: "",
+                minLevel = detail?.minLevel,
+                imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
+            ))
+            
+            current.evolvesTo.forEach { processLink(it) }
+        }
+        
+        processLink(link)
+        return steps
     }
 
     override suspend fun getPokemonDetailsParallel(names: List<String>): List<Pokemon> = coroutineScope {
