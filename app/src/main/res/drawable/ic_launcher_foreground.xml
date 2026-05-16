@@ -1,0 +1,40 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Red top half of Pokeball -->
+    <path
+        android:fillColor="#EF5350"
+        android:pathData="M24,54 A30,30 0 1,1 84,54 H24 Z" />
+
+    <!-- White bottom half of Pokeball -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M24,54 A30,30 0 1,0 84,54 H24 Z" />
+
+    <!-- Black central band -->
+    <path
+        android:fillColor="#212121"
+        android:pathData="M24,51H84V57H24Z" />
+
+    <!-- Central button (outer ring) -->
+    <path
+        android:fillColor="#212121"
+        android:pathData="M54,54m-10,0a10,10 0,1 1,20 0a10,10 0,1 1,-20 0" />
+
+    <!-- Central button (inner white circle) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,54m-6,0a6,6 0,1 1,12 0a6,6 0,1 1,-12 0" />
+
+    <!-- Question Mark indicating the guessing game -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,30c-3.3,0 -6,2.7 -6,6h2.5c0,-1.9 1.6,-3.5 3.5,-3.5s3.5,1.6 3.5,3.5c0,3.5 -5,3.3 -5,8.8h2.5c0,-4 5,-4.2 5,-8.8C60,32.7 57.3,30 54,30z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M52.75,46.5h2.5v2.5h-2.5z" />
+
+</vector>
