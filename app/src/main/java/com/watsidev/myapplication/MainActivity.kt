@@ -1,13 +1,14 @@
 package com.watsidev.myapplication
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -30,9 +31,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+            Log.e("FATAL_CRASH", "Uncaught exception on thread ${thread.name}", throwable)
+        }
+
         enableEdgeToEdge()
         setContent {
-            val viewModel: GameViewModel = viewModel()
+            val viewModel: GameViewModel = hiltViewModel()
             val uiState by viewModel.uiState.collectAsState()
             
             val darkTheme = when (uiState.theme) {

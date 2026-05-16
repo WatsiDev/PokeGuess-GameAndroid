@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
     implementation(libs.hilt.android)
+    implementation(libs.androidx.hilt.navigation.compose)
     "ksp"(libs.hilt.compiler)
     implementation(libs.coil.compose)
     implementation(libs.converter.moshi)

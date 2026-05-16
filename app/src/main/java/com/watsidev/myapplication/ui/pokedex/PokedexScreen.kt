@@ -1,7 +1,9 @@
 package com.watsidev.myapplication.ui.pokedex
 
+import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -18,7 +20,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import java.util.Locale
@@ -26,10 +28,15 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PokedexScreen(
-    viewModel: PokedexViewModel = viewModel(),
+    viewModel: PokedexViewModel = hiltViewModel(),
     onNavigateBack: () -> Unit
 ) {
+    Log.d("PokedexScreen", "Composition started")
     val uiState by viewModel.uiState.collectAsState()
+    
+    LaunchedEffect(uiState.pokemonList.size) {
+        Log.d("PokedexScreen", "UI State updated: ${uiState.pokemonList.size} Pokémon, ${uiState.discoveredIds.size} Discovered")
+    }
 
     Scaffold(
         topBar = {
@@ -48,52 +55,57 @@ fun PokedexScreen(
             )
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
-            DiscoveryProgress(
-                discovered = uiState.discoveredIds.size,
-                total = uiState.totalPokemonCount
-            )
-            
-            when {
-                uiState.isLoading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+        when {
+            uiState.isLoading -> {
+                Box(modifier = Modifier.padding(innerPadding).fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+            uiState.error != null -> {
+                Column(
+                    modifier = Modifier.padding(innerPadding).fillMaxSize().padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { viewModel.loadPokemonList() }) {
+                        Text("Retry")
                     }
                 }
-                uiState.error != null -> {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
+            }
+            uiState.pokemonList.isEmpty() -> {
+                Box(modifier = Modifier.padding(innerPadding).fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("No Pokémon data found.")
+                }
+            }
+            else -> {
+                Log.d("PokedexScreen", "Rendering grid with ${uiState.pokemonList.size} items")
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 100.dp),
+                    modifier = Modifier.padding(innerPadding).fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    item(
+                        span = { GridItemSpan(maxLineSpan) }
                     ) {
-                        Text(text = uiState.error!!, color = MaterialTheme.colorScheme.error, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadPokemonList() }) {
-                            Text("Retry")
-                        }
+                        DiscoveryProgress(
+                            discovered = uiState.discoveredIds.size,
+                            total = uiState.totalPokemonCount
+                        )
                     }
-                }
-                uiState.pokemonList.isEmpty() -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No Pokémon data found.")
-                    }
-                }
-                else -> {
-                    LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 100.dp),
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        itemsIndexed(
-                            items = uiState.pokemonList,
-                            key = { _, name -> name } // Using name as a stable key
-                        ) { index, name ->
-                            val id = index + 1
-                            val isDiscovered = uiState.discoveredIds.contains(id)
-                            PokedexEntry(id = id, name = name, isDiscovered = isDiscovered)
+
+                    itemsIndexed(
+                        items = uiState.pokemonList,
+                        key = { index, name -> 
+                            "${name}_$index"
                         }
+                    ) { index, name ->
+                        val id = index + 1
+                        val isDiscovered = uiState.discoveredIds.contains(id)
+                        PokedexEntry(id = id, name = name, isDiscovered = isDiscovered)
                     }
                 }
             }

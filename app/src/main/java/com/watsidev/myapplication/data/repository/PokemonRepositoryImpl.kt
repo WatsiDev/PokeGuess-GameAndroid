@@ -1,5 +1,6 @@
 package com.watsidev.myapplication.data.repository
 
+import android.util.Log
 import com.watsidev.myapplication.data.local.DiscoveryDao
 import com.watsidev.myapplication.data.local.DiscoveryEntity
 import com.watsidev.myapplication.data.model.Item
@@ -25,17 +26,24 @@ class PokemonRepositoryImpl @Inject constructor(
     private var cachedPokemonList: List<NamedApiResourceShort>? = null
 
     override suspend fun getPokemonList(): List<NamedApiResourceShort> {
-        cachedPokemonList?.let { return it }
+        cachedPokemonList?.let { 
+            Log.d("Repo", "Returning cached Pokémon list (${it.size} items)")
+            return it 
+        }
         return try {
+            Log.d("Repo", "Fetching Pokémon list from API")
             val list = apiService.getPokemonList().results
+            Log.d("Repo", "Successfully fetched ${list.size} Pokémon from API")
             cachedPokemonList = list
             list
         } catch (e: Exception) {
+            Log.e("Repo", "Error fetching Pokémon list", e)
             emptyList()
         }
     }
     
     override fun getDiscoveredPokemon(): Flow<List<DiscoveryEntity>> {
+        Log.d("Repo", "Observing discovered Pokémon from database")
         return discoveryDao.getAllDiscovered()
     }
 
