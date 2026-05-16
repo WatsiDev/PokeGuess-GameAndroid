@@ -20,9 +20,17 @@ class PokemonRepositoryImpl @Inject constructor(
 ) : PokemonRepository {
 
     private val pokemonCache = mutableMapOf<String, Pokemon>()
+    private var cachedPokemonList: List<NamedApiResourceShort>? = null
 
     override suspend fun getPokemonList(): List<NamedApiResourceShort> {
-        return apiService.getPokemonList().results
+        cachedPokemonList?.let { return it }
+        return try {
+            val list = apiService.getPokemonList().results
+            cachedPokemonList = list
+            list
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
     
     override fun getDiscoveredPokemon(): Flow<List<DiscoveryEntity>> {
