@@ -1,5 +1,6 @@
 package com.watsidev.myapplication.data.remote
 
+import com.watsidev.myapplication.data.model.EvolutionChainResponse
 import com.watsidev.myapplication.data.model.PokemonResponse
 import com.watsidev.myapplication.data.model.PokemonSpeciesResponse
 import retrofit2.http.GET
@@ -12,6 +13,9 @@ interface PokeApiService {
 
     @GET("pokemon-species/{name}")
     suspend fun getPokemonSpecies(@Path("name") name: String): PokemonSpeciesResponse
+
+    @GET("evolution-chain/{id}")
+    suspend fun getEvolutionChain(@Path("id") id: String): EvolutionChainResponse
 
     @GET("pokemon")
     suspend fun getPokemonList(

@@ -28,6 +28,13 @@ class PokemonRepositoryImpl @Inject constructor(
             val response = apiService.getPokemon(name)
             val speciesResponse = apiService.getPokemonSpecies(name)
             
+            // Fetch evolution chain to determine stage
+            val evolutionChainUrl = speciesResponse.evolutionChain.url
+            val chainId = evolutionChainUrl.split("/").filter { it.isNotEmpty() }.last()
+            val evolutionChain = apiService.getEvolutionChain(chainId)
+            
+            val stage = findEvolutionStage(evolutionChain.chain, response.name)
+
             // Extract generation number from generation name
             val genName = speciesResponse.generation.name
             val genNumber = when (genName) {
@@ -49,8 +56,7 @@ class PokemonRepositoryImpl @Inject constructor(
                 height = response.height,
                 weight = response.weight,
                 types = response.types.map { it.type.name },
-                abilities = response.abilities.map { it.ability.name },
-                eggGroups = speciesResponse.eggGroups.map { it.name },
+                evolutionaryStage = stage,
                 generation = genNumber,
                 imageUrl = response.sprites.other.officialArtwork.frontDefault
             )
@@ -65,12 +71,20 @@ class PokemonRepositoryImpl @Inject constructor(
                 height = 0,
                 weight = 0,
                 types = emptyList(),
-                abilities = emptyList(),
-                eggGroups = emptyList(),
+                evolutionaryStage = 1,
                 generation = 0,
                 imageUrl = null
             )
         }
+    }
+
+    private fun findEvolutionStage(link: com.watsidev.myapplication.data.model.ChainLink, name: String, currentStage: Int = 1): Int {
+        if (link.species.name == name) return currentStage
+        for (nextLink in link.evolvesTo) {
+            val stage = findEvolutionStage(nextLink, name, currentStage + 1)
+            if (stage != -1) return stage
+        }
+        return -1
     }
 
     override suspend fun getPokemonDetailsParallel(names: List<String>): List<Pokemon> = coroutineScope {

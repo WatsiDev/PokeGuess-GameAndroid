@@ -11,8 +11,7 @@ class ComparePokemonUseCase @Inject constructor() {
             name = guess.name,
             imageUrl = guess.imageUrl,
             types = compareList(guess.types, target.types),
-            abilities = compareList(guess.abilities, target.abilities),
-            eggGroups = compareList(guess.eggGroups, target.eggGroups),
+            evolutionaryStage = compareNumerical(guess.evolutionaryStage, target.evolutionaryStage),
             height = compareNumerical(guess.height, target.height),
             weight = compareNumerical(guess.weight, target.weight),
             generation = compareNumerical(guess.generation, target.generation)

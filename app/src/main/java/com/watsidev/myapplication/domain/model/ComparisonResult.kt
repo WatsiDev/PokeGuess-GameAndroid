@@ -19,8 +19,7 @@ data class PokemonComparison(
     val name: String,
     val imageUrl: String?,
     val types: AttributeResult<List<String>>,
-    val abilities: AttributeResult<List<String>>,
-    val eggGroups: AttributeResult<List<String>>,
+    val evolutionaryStage: AttributeResult<Int>,
     val height: AttributeResult<Int>,
     val weight: AttributeResult<Int>,
     val generation: AttributeResult<Int>

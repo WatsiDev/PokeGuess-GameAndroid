@@ -199,6 +199,8 @@ fun SearchBar(
                                 ) {
                                     Text("Gen ${pokemon.generation}", style = MaterialTheme.typography.labelSmall)
                                     Text("•", style = MaterialTheme.typography.labelSmall)
+                                    Text("Stage ${pokemon.evolutionaryStage}", style = MaterialTheme.typography.labelSmall)
+                                    Text("•", style = MaterialTheme.typography.labelSmall)
                                     pokemon.types.forEach { type ->
                                         Surface(
                                             shape = RoundedCornerShape(4.dp),
@@ -331,9 +333,8 @@ fun GuessItem(guess: PokemonComparison) {
             ) {
                 AttributeBox("Gen", guess.generation.value.toString(), guess.generation.state, guess.generation.direction)
                 AttributeBox("ID", "#${guess.id.value}", guess.id.state, guess.id.direction)
+                AttributeBox("Stage", "S${guess.evolutionaryStage.value}", guess.evolutionaryStage.state, guess.evolutionaryStage.direction)
                 AttributeBox("Types", guess.types.value.joinToString("\n"), guess.types.state)
-                AttributeBox("Abil.", guess.abilities.value.joinToString("\n"), guess.abilities.state)
-                AttributeBox("Egg", guess.eggGroups.value.joinToString("\n"), guess.eggGroups.state)
                 AttributeBox("Height", "${guess.height.value / 10.0}m", guess.height.state, guess.height.direction)
                 AttributeBox("Weight", "${guess.weight.value / 10.0}kg", guess.weight.state, guess.weight.direction)
             }
