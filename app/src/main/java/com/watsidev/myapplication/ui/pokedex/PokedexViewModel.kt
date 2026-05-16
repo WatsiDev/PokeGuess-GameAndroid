@@ -34,10 +34,10 @@ class PokedexViewModel @Inject constructor(
     private fun loadDiscoveryData() {
         repository.getDiscoveredPokemon()
             .map { discovered -> 
-                withContext(Dispatchers.Default) {
-                    discovered.map { it.id }.toSet()
-                }
+                // Move heavy set conversion to background thread
+                discovered.map { it.id }.toSet()
             }
+            .flowOn(Dispatchers.Default)
             .onEach { discoveredIds ->
                 _uiState.update { it.copy(discoveredIds = discoveredIds) }
             }
@@ -52,9 +52,14 @@ class PokedexViewModel @Inject constructor(
             try {
                 _uiState.update { it.copy(isLoading = true, error = null) }
                 val list = repository.getPokemonList()
+                
                 if (list.isNotEmpty()) {
+                    // Process heavy list mapping on Default dispatcher
+                    val names = withContext(Dispatchers.Default) {
+                        list.map { it.name }
+                    }
                     _uiState.update { it.copy(
-                        pokemonList = list.map { it.name },
+                        pokemonList = names,
                         totalPokemonCount = list.size,
                         isLoading = false
                     ) }

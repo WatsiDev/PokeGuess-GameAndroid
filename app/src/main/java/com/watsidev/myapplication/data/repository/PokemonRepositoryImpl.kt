@@ -10,6 +10,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,7 +20,8 @@ class PokemonRepositoryImpl @Inject constructor(
     private val discoveryDao: DiscoveryDao
 ) : PokemonRepository {
 
-    private val pokemonCache = mutableMapOf<String, Pokemon>()
+    private val pokemonCache = ConcurrentHashMap<String, Pokemon>()
+    @Volatile
     private var cachedPokemonList: List<NamedApiResourceShort>? = null
 
     override suspend fun getPokemonList(): List<NamedApiResourceShort> {

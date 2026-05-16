@@ -88,7 +88,7 @@ fun PokedexScreen(
                     ) {
                         itemsIndexed(
                             items = uiState.pokemonList,
-                            key = { index, _ -> index } // Using index as key for stability
+                            key = { _, name -> name } // Using name as a stable key
                         ) { index, name ->
                             val id = index + 1
                             val isDiscovered = uiState.discoveredIds.contains(id)
