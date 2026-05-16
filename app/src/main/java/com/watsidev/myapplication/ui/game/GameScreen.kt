@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.watsidev.myapplication.data.model.Pokemon
 import com.watsidev.myapplication.domain.model.Direction
 import com.watsidev.myapplication.domain.model.MatchState
 import com.watsidev.myapplication.domain.model.PokemonComparison
@@ -35,17 +37,32 @@ import com.watsidev.myapplication.ui.theme.PartialYellow
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GameScreen(viewModel: GameViewModel, onNavigateToPokedex: () -> Unit) {
+fun GameScreen(
+    viewModel: GameViewModel,
+    onNavigateBack: () -> Unit
+) {
     val uiState by viewModel.uiState.collectAsState()
+
+    if (uiState.isGameOver && uiState.targetPokemon != null) {
+        VictoryModal(
+            pokemon = uiState.targetPokemon!!,
+            gameMode = uiState.gameMode,
+            timeUntilNext = uiState.timeUntilNext,
+            onPlayAgain = { viewModel.setGameMode(GameMode.INFINITE) },
+            onGoHome = onNavigateBack
+        )
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("PokeGuess", fontWeight = FontWeight.Bold) },
-                actions = {
-                    IconButton(onClick = onNavigateToPokedex) {
-                        Icon(Icons.Default.Menu, contentDescription = "Pokedex")
+                title = { Text(if (uiState.gameMode == GameMode.DAILY) "Daily Challenge" else "Infinite Mode", fontWeight = FontWeight.Bold) },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
+                },
+                actions = {
                     Text(
                         "Streak: ${uiState.streak}",
                         modifier = Modifier.padding(end = 16.dp),
@@ -53,22 +70,6 @@ fun GameScreen(viewModel: GameViewModel, onNavigateToPokedex: () -> Unit) {
                     )
                 }
             )
-        },
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = uiState.gameMode == GameMode.DAILY,
-                    onClick = { viewModel.setGameMode(GameMode.DAILY) },
-                    icon = { Icon(Icons.Default.Today, contentDescription = "Daily") },
-                    label = { Text("Daily") }
-                )
-                NavigationBarItem(
-                    selected = uiState.gameMode == GameMode.INFINITE,
-                    onClick = { viewModel.setGameMode(GameMode.INFINITE) },
-                    icon = { Icon(Icons.Default.AllInclusive, contentDescription = "Infinite") },
-                    label = { Text("Infinite") }
-                )
-            }
         }
     ) { innerPadding ->
         Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
@@ -108,42 +109,22 @@ fun GameContent(uiState: GameUiState, viewModel: GameViewModel) {
 
 @Composable
 fun SearchSection(uiState: GameUiState, viewModel: GameViewModel) {
-    SearchBar(
-        query = uiState.searchQuery,
-        onQueryChanged = { viewModel.onSearchQueryChanged(it) },
-        results = uiState.searchResults,
-        onResultSelected = { viewModel.makeGuess(it) },
-        enabled = !uiState.isGameOver,
-        isSearching = uiState.isSearching
-    )
-
-    if (uiState.isGameOver) {
-        GameOverCard(
-            targetName = uiState.targetPokemon?.name ?: "Unknown",
-            timeUntilNext = uiState.timeUntilNext,
-            isDaily = uiState.gameMode == GameMode.DAILY,
-            onReset = { viewModel.setGameMode(uiState.gameMode) }
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Guess #${uiState.guesses.size + 1}",
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
         )
-    }
-}
-
-@Composable
-fun ModeSelector(currentMode: GameMode, onModeSelected: (GameMode) -> Unit) {
-    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-        SegmentedButton(
-            selected = currentMode == GameMode.DAILY,
-            onClick = { onModeSelected(GameMode.DAILY) },
-            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-        ) {
-            Text("Daily")
-        }
-        SegmentedButton(
-            selected = currentMode == GameMode.INFINITE,
-            onClick = { onModeSelected(GameMode.INFINITE) },
-            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-        ) {
-            Text("Infinite")
-        }
+        Spacer(modifier = Modifier.height(8.dp))
+        SearchBar(
+            query = uiState.searchQuery,
+            onQueryChanged = { viewModel.onSearchQueryChanged(it) },
+            results = uiState.searchResults,
+            onResultSelected = { viewModel.makeGuess(it) },
+            enabled = !uiState.isGameOver,
+            isSearching = uiState.isSearching
+        )
     }
 }
 
@@ -152,7 +133,7 @@ fun ModeSelector(currentMode: GameMode, onModeSelected: (GameMode) -> Unit) {
 fun SearchBar(
     query: String,
     onQueryChanged: (String) -> Unit,
-    results: List<com.watsidev.myapplication.data.model.Pokemon>,
+    results: List<Pokemon>,
     onResultSelected: (String) -> Unit,
     enabled: Boolean,
     isSearching: Boolean
@@ -242,50 +223,77 @@ fun SearchBar(
 }
 
 @Composable
-fun GameOverCard(targetName: String, timeUntilNext: String, isDaily: Boolean, onReset: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+fun VictoryModal(
+    pokemon: Pokemon,
+    gameMode: GameMode,
+    timeUntilNext: String,
+    onPlayAgain: () -> Unit,
+    onGoHome: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = { /* Modal is mandatory on win */ },
+        confirmButton = {
+            if (gameMode == GameMode.INFINITE) {
+                Button(onClick = onPlayAgain) {
+                    Text("Play Again")
+                }
+            } else {
+                Button(onClick = onGoHome) {
+                    Text("Home")
+                }
+            }
+        },
+        title = {
             Text(
-                "Congratulations!",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                fontWeight = FontWeight.ExtraBold
+                text = "CATCH SUCCESS!",
+                fontWeight = FontWeight.Black,
+                color = CorrectGreen,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            Text(
-                "You found $targetName!",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            if (isDaily) {
-                Text(
-                    "Next Pokemon in:",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(pokemon.imageUrl)
+                        .crossfade(true)
+                        .build(),
+                    contentDescription = pokemon.name,
+                    modifier = Modifier.size(160.dp),
+                    contentScale = ContentScale.Fit
                 )
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    timeUntilNext,
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    text = pokemon.name.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
-            } else {
-                Button(onClick = onReset, shape = RoundedCornerShape(12.dp)) {
-                    Text("Play Again")
+                Text(
+                    text = "#${pokemon.id}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.outline
+                )
+                
+                if (gameMode == GameMode.DAILY) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        "Next Pokémon in:",
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    Text(
+                        text = timeUntilNext,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
                 }
             }
         }
-    }
+    )
 }
 
 @Composable

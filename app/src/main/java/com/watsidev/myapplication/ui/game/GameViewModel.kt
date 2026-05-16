@@ -37,6 +37,7 @@ data class GameUiState(
     val streak: Int = 0,
     val timeUntilNext: String = "",
     val capturedIds: Set<Int> = emptySet(),
+    val theme: String = "system",
     val error: String? = null
 )
 
@@ -74,6 +75,13 @@ class GameViewModel @Inject constructor(
                 launch {
                     userPreferences.capturedPokemonIds.collect { ids ->
                         _uiState.update { it.copy(capturedIds = ids) }
+                    }
+                }
+
+                // Collect theme
+                launch {
+                    userPreferences.themePreference.collect { theme ->
+                        _uiState.update { it.copy(theme = theme) }
                     }
                 }
 
@@ -229,6 +237,7 @@ class GameViewModel @Inject constructor(
                         userPreferences.updateStreak(_uiState.value.streak + 1)
                     }
                     userPreferences.addCapturedPokemon(target.id)
+                    repository.markAsDiscovered(target.id, target.name)
                 }
 
                 _uiState.update { 
@@ -242,6 +251,21 @@ class GameViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
             }
+        }
+    }
+
+    fun resetAllProgress() {
+        viewModelScope.launch {
+            repository.clearDiscovery()
+            userPreferences.resetAll()
+            _uiState.update { GameUiState() }
+            loadInitialData()
+        }
+    }
+
+    fun setTheme(theme: String) {
+        viewModelScope.launch {
+            userPreferences.updateTheme(theme)
         }
     }
 }

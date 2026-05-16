@@ -23,6 +23,7 @@ class UserPreferencesRepository @Inject constructor(
     private val LAST_GUESS_DATE = stringPreferencesKey("last_guess_date")
     private val DAILY_GUESSES = stringPreferencesKey("daily_guesses")
     private val CAPTURED_POKEMON_IDS = stringPreferencesKey("captured_pokemon_ids")
+    private val THEME_KEY = stringPreferencesKey("theme_preference")
 
     val currentStreak: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[STREAK_KEY] ?: 0
@@ -39,6 +40,10 @@ class UserPreferencesRepository @Inject constructor(
     val capturedPokemonIds: Flow<Set<Int>> = context.dataStore.data.map { preferences ->
         val idsString = preferences[CAPTURED_POKEMON_IDS] ?: ""
         if (idsString.isEmpty()) emptySet() else idsString.split(",").mapNotNull { it.toIntOrNull() }.toSet()
+    }
+
+    val themePreference: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[THEME_KEY] ?: "system"
     }
 
     suspend fun updateStreak(streak: Int) {
@@ -59,6 +64,12 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    suspend fun updateTheme(theme: String) {
+        context.dataStore.edit { preferences ->
+            preferences[THEME_KEY] = theme
+        }
+    }
+
     suspend fun addCapturedPokemon(id: Int) {
         context.dataStore.edit { preferences ->
             val currentIds = (preferences[CAPTURED_POKEMON_IDS] ?: "").split(",")
@@ -71,6 +82,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun clearDailyData() {
         context.dataStore.edit { preferences ->
             preferences.remove(DAILY_GUESSES)
+        }
+    }
+
+    suspend fun resetAll() {
+        context.dataStore.edit { preferences ->
+            preferences.clear()
         }
     }
 }

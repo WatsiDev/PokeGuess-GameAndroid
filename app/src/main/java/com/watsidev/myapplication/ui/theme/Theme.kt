@@ -20,10 +20,10 @@ private val LightColorScheme = lightColorScheme(
     onSecondary = OnSecondaryLight,
     secondaryContainer = SecondaryContainerLight,
     onSecondaryContainer = OnSecondaryContainerLight,
-    tertiary = TertiaryLight,
-    onTertiary = OnTertiaryLight,
-    tertiaryContainer = TertiaryContainerLight,
-    onTertiaryContainer = OnTertiaryContainerLight
+    background = BackgroundLight,
+    onBackground = OnBackgroundLight,
+    surface = SurfaceLight,
+    onSurface = OnSurfaceLight
 )
 
 private val DarkColorScheme = darkColorScheme(
@@ -31,15 +31,17 @@ private val DarkColorScheme = darkColorScheme(
     onPrimary = OnPrimaryDark,
     secondary = SecondaryDark,
     onSecondary = OnSecondaryDark,
-    tertiary = TertiaryDark,
-    onTertiary = OnTertiaryDark
+    background = BackgroundDark,
+    onBackground = OnBackgroundDark,
+    surface = SurfaceDark,
+    onSurface = OnSurfaceDark
 )
 
 @Composable
 fun MyApplicationTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false, // Disabled for fixed Pokedex aesthetic
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

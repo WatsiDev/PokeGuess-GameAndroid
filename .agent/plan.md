@@ -1,32 +1,33 @@
 # Project Plan
 
-Crea un juego tipo wordle pero con tema de pokemon, utiliza la API de pokemon, crea diferentes modos de juego como adivinar el pokemon, la generacion, o el objeto. Crea una mecanica para que cada dia se actualice un personaje para adivinar, como una racha. Además de tener un modo para jugar independientemente de la racha, donde se pueda jugar y adivinar uno tras otro. La mecanica para adivinar seria buscar en tiempo real mediante una barra de busqueda el pokemon para que vaya viendose los resutlados (limitado a unos 10 max) y cada resultado tendra unas caracteristicas, que al seleccionar un resultado el juego nos mostrará que caracteristicas coinciden. Utiliza un codigo de colores para definir si una caracteristica es correcta (verde), incorrecta (rojo) o parcialmente correcta (amarillo). Si alguna caracteristica puede tener opciones de mas alto o mas bajo, por ejemplo si consideras numero de la pokedex, que además del codigo de color se coloque una ayuda visual con unas flechas para definir si la caracteristica es menor o mayor. Utiliza retrofit para consumir la API y COIL para dibujar las imagenes mediante la URL de la API. Utiliza viewmodel e inyeccion de dependencias con hilt. Arquitectura MVVM.
+Rediseño total de PokeGuess para que parezca una Pokédex real. Incluye pantalla Home, Game Screen con intentos y modal de victoria, Pokédex mejorada con siluetas y progreso, y pantalla de Ajustes con temas y reinicio. Estética minimalista en rojo/blanco/negro.
 
 ## Project Brief
 
-# Project Brief: PokeGuess
+# Project Brief: PokeGuess Redux
 
-PokeGuess is a vibrant, Wordle-inspired Pokémon guessing game built with modern Android standards. Players test their Pokémon knowledge by identifying a mystery target through a process of elimination, comparing attributes like types, generation, and physical stats.
+PokeGuess Redux is a minimalist, Pokédex-inspired guessing game. It combines the strategic deduction of Wordle with a comprehensive collection system, featuring a sleek red-and-white aesthetic and smooth, device-like animations.
 
 ## Features
-- **Daily & Infinite Game Modes:** A shared daily challenge with streak tracking and a dedicated infinite mode for practice and continuous play.
-- **Smart Search & Suggestions:** Real-time auto-complete search functionality allowing users to quickly find and select any Pokémon from the Pokédex.
-- **Attribute Comparison System:** Feedback logic that compares guesses against the target Pokémon using Material 3 color states (Green for match, Yellow for partial/near, Red for mismatch) and directional indicators for numerical values (Height, Weight, Generation).
-- **Adaptive Material 3 Interface:** A fully responsive UI designed to provide a seamless experience across handhelds, foldables, and tablets using adaptive layouts.
+- **Dual Play Modes:** Includes a "Daily" challenge to maintain streaks and an "Infinite" mode for unlimited practice sessions.
+- **Smart Game Engine:** Features an attempt counter, real-time autocomplete search for Pokémon selection, and a victory modal to celebrate successful catches.
+- **Interactive Pokédex Grid:** A collection system showing discovered Pokémon in a grid, utilizing silhouettes for undiscovered entries and tracking overall completion progress.
+- **Pokédex Aesthetic UI:** A specialized Material 3 theme utilizing a bold red, white, and black palette, designed to look and feel like a high-tech handheld device.
+- **Progress Management:** Integrated settings for light/dark/auto themes and a secure way to reset game progress and local discovery data.
 
 ## High-Level Technical Stack
 - **Language:** Kotlin
 - **UI Framework:** Jetpack Compose (Material 3)
 - **Architecture:** MVVM with Hilt (Dependency Injection)
-- **Navigation:** Jetpack Navigation 3 (State-driven architecture)
-- **Adaptive Strategy:** Compose Material Adaptive library (supporting various window size classes)
+- **Navigation:** Jetpack Navigation 3 (State-driven)
+- **Adaptive Strategy:** Compose Material Adaptive (for responsive grid and list-detail layouts)
 - **Networking:** Retrofit & Moshi (Integration with PokéAPI)
-- **Image Loading:** Coil (Asynchronous loading of Pokémon sprites)
+- **Persistence:** Room (Required for the local Pokédex cache and progress tracking)
 - **Asynchrony:** Kotlin Coroutines & Flow
-- **Data Persistence:** DataStore (for user preferences and streaks)
+- **Image Loading:** Coil (Handling both sprites and silhouette transformations)
 
 ## Implementation Steps
-**Total Duration:** 4h 14m 54s
+**Total Duration:** 6h 30m 53s
 
 ### Task_1_Setup_Infrastructure: Set up Hilt dependency injection, Retrofit for PokeAPI, and define data models for Pokémon and items.
 - **Status:** COMPLETED
@@ -79,4 +80,25 @@ PokeGuess is a vibrant, Wordle-inspired Pokémon guessing game built with modern
   - Application is stable, no crashes during gameplay
   - Full compliance with user requirements for color coding and visual aids
 - **Duration:** 1h 7m 36s
+
+### Task_6_Pokedex_System_and_Room: Implement Room database for discovery tracking and build the Pokédex screen with a silhouette-based collection grid.
+- **Status:** COMPLETED
+- **Updates:** Room database and DAO implemented for discovery tracking. Pokedex screen built with a grid of all 1025+ entries. Silhouette logic using Coil ColorFilter implemented for undiscovered entries. Progress bar with percentage display added. Integration with GameViewModel to save wins automatically.
+- **Acceptance Criteria:**
+  - Room database correctly persists discovered Pokémon IDs
+  - Pokédex screen displays a grid with silhouettes for undiscovered entries
+  - Completion progress percentage is calculated and displayed
+  - Coil transformations are used for silhouette effects
+- **Duration:** 1h 12m 1s
+
+### Task_7_Redux_UI_and_Navigation: Apply the minimalist Pokédex aesthetic (Red/White/Black), build the Home/Settings screens, and refine the Game UI with victory modals and attempt counters.
+- **Status:** COMPLETED
+- **Updates:** Pokedex Redux UI overhaul complete. Home screen added with Daily, Infinite, Pokedex, and Settings cards. Settings screen implements theme selection, progress reset, and app info. Game screen enhanced with attempt counter and high-impact victory modal. Material 3 theme updated with Pokedex-specific colors (Red/White/Black). Application navigation flow is verified.
+- **Acceptance Criteria:**
+  - Material 3 theme updated to minimalist red, white, and black palette
+  - Home screen serves as the main entry point with navigation
+  - Settings screen functional for theme switching and progress reset
+  - Game screen includes attempt counter and celebratory victory modal
+  - Application is stable, builds successfully, and does not crash
+- **Duration:** 1h 3m 58s
 

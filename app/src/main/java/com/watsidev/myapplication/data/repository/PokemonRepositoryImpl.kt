@@ -1,5 +1,7 @@
 package com.watsidev.myapplication.data.repository
 
+import com.watsidev.myapplication.data.local.DiscoveryDao
+import com.watsidev.myapplication.data.local.DiscoveryEntity
 import com.watsidev.myapplication.data.model.Item
 import com.watsidev.myapplication.data.model.Pokemon
 import com.watsidev.myapplication.data.remote.NamedApiResourceShort
@@ -7,18 +9,32 @@ import com.watsidev.myapplication.data.remote.PokeApiService
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class PokemonRepositoryImpl @Inject constructor(
-    private val apiService: PokeApiService
+    private val apiService: PokeApiService,
+    private val discoveryDao: DiscoveryDao
 ) : PokemonRepository {
 
     private val pokemonCache = mutableMapOf<String, Pokemon>()
 
     override suspend fun getPokemonList(): List<NamedApiResourceShort> {
         return apiService.getPokemonList().results
+    }
+    
+    override fun getDiscoveredPokemon(): Flow<List<DiscoveryEntity>> {
+        return discoveryDao.getAllDiscovered()
+    }
+
+    override suspend fun markAsDiscovered(id: Int, name: String) {
+        discoveryDao.insertDiscovery(DiscoveryEntity(id, name))
+    }
+
+    override suspend fun clearDiscovery() {
+        discoveryDao.clearAll()
     }
 
     override suspend fun getPokemon(name: String): Pokemon {
