@@ -1,0 +1,273 @@
+package com.watsidev.pokeguessredux.ui.game
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.watsidev.pokeguessredux.data.local.UserPreferencesRepository
+import com.watsidev.pokeguessredux.data.model.Pokemon
+import com.watsidev.pokeguessredux.data.remote.NamedApiResourceShort
+import com.watsidev.pokeguessredux.data.repository.PokemonRepository
+import com.watsidev.pokeguessredux.domain.model.MatchState
+import com.watsidev.pokeguessredux.domain.model.PokemonComparison
+import com.watsidev.pokeguessredux.domain.usecase.ComparePokemonUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import java.text.SimpleDateFormat
+import java.util.*
+import javax.inject.Inject
+import kotlin.random.Random
+
+enum class GameMode {
+    DAILY, INFINITE
+}
+
+data class GameUiState(
+    val gameMode: GameMode = GameMode.DAILY,
+    val targetPokemon: Pokemon? = null,
+    val guesses: List<PokemonComparison> = emptyList(),
+    val isGameOver: Boolean = false,
+    val searchQuery: String = "",
+    val searchResults: List<Pokemon> = emptyList(),
+    val isLoading: Boolean = false,
+    val isSearching: Boolean = false,
+    val streak: Int = 0,
+    val timeUntilNext: String = "",
+    val capturedIds: Set<Int> = emptySet(),
+    val theme: String = "system",
+    val error: String? = null
+)
+
+@HiltViewModel
+class GameViewModel @Inject constructor(
+    private val repository: PokemonRepository,
+    private val userPreferences: UserPreferencesRepository,
+    private val comparePokemonUseCase: ComparePokemonUseCase
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(GameUiState())
+    val uiState: StateFlow<GameUiState> = _uiState.asStateFlow()
+
+    private var allPokemon: List<NamedApiResourceShort> = emptyList()
+    private var searchJob: Job? = null
+
+    init {
+        loadInitialData()
+    }
+
+    private fun loadInitialData() {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isLoading = true) }
+                allPokemon = repository.getPokemonList()
+                
+                // Collect streak
+                launch {
+                    userPreferences.currentStreak.collect { streak ->
+                        _uiState.update { it.copy(streak = streak) }
+                    }
+                }
+
+                // Collect captured IDs
+                launch {
+                    userPreferences.capturedPokemonIds.collect { ids ->
+                        _uiState.update { it.copy(capturedIds = ids) }
+                    }
+                }
+
+                // Collect theme
+                launch {
+                    userPreferences.themePreference.collect { theme ->
+                        _uiState.update { it.copy(theme = theme) }
+                    }
+                }
+
+                // Initial setup for Daily mode
+                setupDailyGame()
+                startTimeUntilNextUpdate()
+
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message) }
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
+            }
+        }
+    }
+
+    private fun startTimeUntilNextUpdate() {
+        viewModelScope.launch {
+            while (true) {
+                val now = Calendar.getInstance()
+                val tomorrow = Calendar.getInstance().apply {
+                    add(Calendar.DAY_OF_YEAR, 1)
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                }
+                val diff = tomorrow.timeInMillis - now.timeInMillis
+                val hours = diff / (1000 * 60 * 60)
+                val minutes = (diff % (1000 * 60 * 60)) / (1000 * 60)
+                val seconds = (diff % (1000 * 60)) / 1000
+                _uiState.update { it.copy(timeUntilNext = String.format("%02d:%02d:%02d", hours, minutes, seconds)) }
+                kotlinx.coroutines.delay(1000)
+            }
+        }
+    }
+
+    fun setGameMode(mode: GameMode) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(gameMode = mode, guesses = emptyList(), isGameOver = false) }
+            if (mode == GameMode.DAILY) {
+                setupDailyGame()
+            } else {
+                setupInfiniteGame()
+            }
+        }
+    }
+
+    private suspend fun setupDailyGame() {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val lastDate = userPreferences.lastGuessDate.first()
+        
+        if (lastDate != today && lastDate != null) {
+            val calendar = Calendar.getInstance()
+            calendar.add(Calendar.DAY_OF_YEAR, -1)
+            val yesterday = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+            
+            if (lastDate != yesterday) {
+                userPreferences.updateStreak(0)
+            }
+            userPreferences.clearDailyData()
+        }
+
+        val seed = today.hashCode().toLong()
+        val random = Random(seed)
+        val randomIndex = random.nextInt(allPokemon.size)
+        val target = repository.getPokemon(allPokemon[randomIndex].name)
+        
+        val savedGuessesJson = userPreferences.dailyGuesses.first()
+        val savedGuessNames: List<String> = if (savedGuessesJson.isNotEmpty()) {
+            Json.decodeFromString(savedGuessesJson)
+        } else {
+            emptyList()
+        }
+
+        val comparisons = savedGuessNames.map { name ->
+            val guessPokemon = repository.getPokemon(name)
+            comparePokemonUseCase(guessPokemon, target)
+        }
+
+        val isGameOver = comparisons.any { it.name == target.name }
+
+        _uiState.update { 
+            it.copy(
+                targetPokemon = target,
+                guesses = comparisons.reversed(),
+                isGameOver = isGameOver
+            ) 
+        }
+    }
+
+    private suspend fun setupInfiniteGame() {
+        val randomIndex = Random.nextInt(allPokemon.size)
+        val target = repository.getPokemon(allPokemon[randomIndex].name)
+        _uiState.update { it.copy(targetPokemon = target) }
+    }
+
+    fun onSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        searchJob?.cancel()
+        
+        if (query.length >= 2) {
+            searchJob = viewModelScope.launch {
+                try {
+                    delay(300)
+                    _uiState.update { it.copy(isSearching = true) }
+                    
+                    // Offline Search: Filter from allPokemon list (which is loaded from Room/API in loadInitialData)
+                    val shortResults = allPokemon.filter { 
+                        it.name.contains(query, ignoreCase = true) 
+                    }.take(10)
+                    
+                    if (shortResults.isNotEmpty()) {
+                        // repository.getPokemonDetailsParallel will check Room for each Pokemon
+                        val detailedResults = repository.getPokemonDetailsParallel(shortResults.map { it.name })
+                        _uiState.update { it.copy(searchResults = detailedResults, isSearching = false) }
+                    } else {
+                        _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
+                    }
+                } catch (e: Exception) {
+                    _uiState.update { it.copy(isSearching = false) }
+                }
+            }
+        } else {
+            _uiState.update { it.copy(searchResults = emptyList(), isSearching = false) }
+        }
+    }
+
+    fun makeGuess(pokemonName: String) {
+        viewModelScope.launch {
+            try {
+                val guessPokemon = repository.getPokemon(pokemonName)
+                val target = _uiState.value.targetPokemon ?: return@launch
+                
+                val comparison = comparePokemonUseCase(guessPokemon, target)
+                val newGuesses = listOf(comparison) + _uiState.value.guesses
+                
+                val isCorrect = comparison.name == target.name
+                
+                if (_uiState.value.gameMode == GameMode.DAILY) {
+                    val savedGuessesJson = userPreferences.dailyGuesses.first()
+                    val savedGuessNames: MutableList<String> = if (savedGuessesJson.isNotEmpty()) {
+                        Json.decodeFromString<List<String>>(savedGuessesJson).toMutableList()
+                    } else {
+                        mutableListOf()
+                    }
+                    if (!savedGuessNames.contains(pokemonName)) {
+                        savedGuessNames.add(pokemonName)
+                        userPreferences.updateDailyGuesses(Json.encodeToString(savedGuessNames))
+                    }
+                }
+
+                if (isCorrect) {
+                    if (_uiState.value.gameMode == GameMode.DAILY) {
+                        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+                        userPreferences.updateLastGuessDate(today)
+                        userPreferences.updateStreak(_uiState.value.streak + 1)
+                    }
+                    userPreferences.addCapturedPokemon(target.id)
+                    repository.markAsDiscovered(target.id, target.name)
+                }
+
+                _uiState.update { 
+                    it.copy(
+                        guesses = newGuesses,
+                        isGameOver = isCorrect,
+                        searchQuery = "",
+                        searchResults = emptyList()
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = e.message) }
+            }
+        }
+    }
+
+    fun resetAllProgress() {
+        viewModelScope.launch {
+            repository.clearDiscovery()
+            userPreferences.resetAll()
+            _uiState.update { GameUiState() }
+            loadInitialData()
+        }
+    }
+
+    fun setTheme(theme: String) {
+        viewModelScope.launch {
+            userPreferences.updateTheme(theme)
+        }
+    }
+}

@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.watsidev.myapplication"
+    namespace = "com.watsidev.pokeguessredux"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.watsidev.myapplication"
+        applicationId = "com.watsidev.pokeguessredux"
         minSdk = 24
         targetSdk = 37
         versionCode = 1
@@ -67,6 +67,8 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
     "ksp"(libs.hilt.compiler)
