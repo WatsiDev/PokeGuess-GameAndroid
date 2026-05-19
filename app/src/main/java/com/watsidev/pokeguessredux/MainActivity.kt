@@ -34,7 +34,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            Log.e("FATAL_CRASH", "Uncaught exception on thread ${thread.name}", throwable)
         }
 
         enableEdgeToEdge()

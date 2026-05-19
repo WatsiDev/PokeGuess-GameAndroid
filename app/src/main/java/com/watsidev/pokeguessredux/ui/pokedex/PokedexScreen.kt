@@ -36,12 +36,10 @@ fun PokedexScreen(
     onNavigateBack: () -> Unit,
     onPokemonClick: (String) -> Unit
 ) {
-    Log.d("PokedexScreen", "Composition started")
     val uiState by viewModel.uiState.collectAsState()
     val pagingItems = viewModel.pokemonPagingData.collectAsLazyPagingItems()
     
     LaunchedEffect(uiState.discoveredIds.size) {
-        Log.d("PokedexScreen", "Discovery updated: ${uiState.discoveredIds.size} Discovered")
     }
 
     Scaffold(
@@ -81,7 +79,6 @@ fun PokedexScreen(
                 }
             }
             else -> {
-                Log.d("PokedexScreen", "Rendering grid with paging")
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 100.dp),
                     modifier = Modifier.padding(innerPadding).fillMaxSize(),

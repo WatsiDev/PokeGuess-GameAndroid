@@ -32,7 +32,6 @@ class PokedexViewModel @Inject constructor(
         .cachedIn(viewModelScope)
 
     init {
-        Log.d("PokedexVM", "ViewModel initialized")
         loadDiscoveryData()
         ensurePokemonListInitialized()
     }
@@ -45,20 +44,16 @@ class PokedexViewModel @Inject constructor(
     }
 
     private fun loadDiscoveryData() {
-        Log.d("PokedexVM", "Starting discovery data observation")
         repository.getDiscoveredPokemon()
             .map { discovered -> 
-                Log.d("PokedexVM", "Processing ${discovered.size} discovered entities")
                 // Move heavy set conversion to background thread
                 discovered.map { it.id }.toSet()
             }
             .flowOn(Dispatchers.Default)
             .onEach { discoveredIds ->
-                Log.d("PokedexVM", "Updating UI with ${discoveredIds.size} discovered IDs")
                 _uiState.update { it.copy(discoveredIds = discoveredIds) }
             }
             .catch { e ->
-                Log.e("PokedexVM", "Error loading discovery data", e)
                 _uiState.update { it.copy(error = "Failed to load discovery data: ${e.message}") }
             }
             .launchIn(viewModelScope)

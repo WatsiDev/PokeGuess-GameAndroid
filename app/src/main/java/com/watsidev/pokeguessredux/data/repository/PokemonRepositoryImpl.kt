@@ -34,14 +34,12 @@ class PokemonRepositoryImpl @Inject constructor(
     override suspend fun getPokemonList(): List<NamedApiResourceShort> {
         val localCount = pokemonDao.getPokemonListCount()
         if (localCount > 0) {
-            Log.d("Repo", "Returning $localCount Pokémon from local DB")
-            return pokemonDao.getAllPokemonList().map { 
+            return pokemonDao.getAllPokemonList().map {
                 NamedApiResourceShort(it.name, it.url)
             }
         }
 
         return try {
-            Log.d("Repo", "Fetching initial Pokémon list from API")
             val response = apiService.getPokemonList(limit = 1025)
             val entities = response.results.map { 
                 val id = it.url.split("/").filter { s -> s.isNotEmpty() }.last().toInt()
@@ -50,13 +48,11 @@ class PokemonRepositoryImpl @Inject constructor(
             pokemonDao.insertPokemonList(entities)
             response.results
         } catch (e: Exception) {
-            Log.e("Repo", "Error fetching Pokémon list", e)
             emptyList()
         }
     }
     
     override fun getDiscoveredPokemon(): Flow<List<DiscoveryEntity>> {
-        Log.d("Repo", "Observing discovered Pokémon from database")
         return discoveryDao.getAllDiscovered()
     }
 
@@ -75,14 +71,12 @@ class PokemonRepositoryImpl @Inject constructor(
         // 2. Check Room DB
         val localPokemon = pokemonDao.getPokemonByName(name)
         if (localPokemon != null) {
-            Log.d("Repo", "Returning $name from local DB")
             val pokemon = mapEntityToModel(localPokemon)
             pokemonCache[name] = pokemon
             return pokemon
         }
 
         // 3. Fetch from API
-        Log.d("Repo", "Fetching $name from API")
         return try {
             val response = apiService.getPokemon(name)
             val speciesResponse = apiService.getPokemonSpecies(name)
@@ -121,7 +115,6 @@ class PokemonRepositoryImpl @Inject constructor(
             pokemonCache[name] = pokemon
             pokemon
         } catch (e: Exception) {
-            Log.e("Repo", "Error fetching Pokémon details for $name", e)
             // Fallback for failed fetches - prevents complete crash
             Pokemon(
                 id = 0,
