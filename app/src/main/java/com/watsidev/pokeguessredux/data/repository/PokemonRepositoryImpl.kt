@@ -79,7 +79,10 @@ class PokemonRepositoryImpl @Inject constructor(
         // 3. Fetch from API
         return try {
             val response = apiService.getPokemon(name)
-            val speciesResponse = apiService.getPokemonSpecies(name)
+            
+            // Extract species name from response (more reliable than string split)
+            val speciesName = response.species.name
+            val speciesResponse = apiService.getPokemonSpecies(speciesName)
             
             // Fetch evolution chain to determine stage
             val evolutionChainUrl = speciesResponse.evolutionChain.url
