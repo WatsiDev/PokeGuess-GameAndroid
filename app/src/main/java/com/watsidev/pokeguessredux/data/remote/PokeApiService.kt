@@ -17,6 +17,12 @@ interface PokeApiService {
     @GET("evolution-chain/{id}")
     suspend fun getEvolutionChain(@Path("id") id: String): EvolutionChainResponse
 
+    @GET("stat/{id}")
+    suspend fun getStat(@Path("id") id: String): StatDetailResponse
+
+    @GET("evolution-trigger/{id}")
+    suspend fun getEvolutionTrigger(@Path("id") id: String): EvolutionTriggerResponse
+
     @GET("pokemon")
     suspend fun getPokemonList(
         @Query("limit") limit: Int = 1025,
@@ -52,4 +58,19 @@ data class PokemonListResponse(
 data class NamedApiResourceShort(
     val name: String,
     val url: String
+)
+
+data class StatDetailResponse(
+    val name: String,
+    val names: List<LocalizedName>
+)
+
+data class EvolutionTriggerResponse(
+    val name: String,
+    val names: List<LocalizedName>
+)
+
+data class LocalizedName(
+    val name: String,
+    val language: NamedApiResourceShort
 )

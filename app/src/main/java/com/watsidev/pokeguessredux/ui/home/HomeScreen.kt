@@ -16,8 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.watsidev.pokeguessredux.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +32,7 @@ fun HomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("POKEGUESS REDUX", fontWeight = FontWeight.Black) },
+                title = { Text(stringResource(R.string.home_title), fontWeight = FontWeight.Black) },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
@@ -48,26 +50,26 @@ fun HomeScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             HomeCard(
-                title = "Daily Challenge",
-                subtitle = "One Pokémon per day. Keep your streak!",
+                title = stringResource(R.string.daily_challenge),
+                subtitle = stringResource(R.string.daily_challenge_subtitle),
                 icon = Icons.Default.Today,
                 onClick = onNavigateToDaily
             )
             HomeCard(
-                title = "Infinite Mode",
-                subtitle = "Practice as much as you want.",
+                title = stringResource(R.string.infinite_mode),
+                subtitle = stringResource(R.string.infinite_mode_subtitle),
                 icon = Icons.Default.AllInclusive,
                 onClick = onNavigateToInfinite
             )
             HomeCard(
-                title = "Pokédex",
-                subtitle = "View your collection and progress.",
+                title = stringResource(R.string.pokedex),
+                subtitle = stringResource(R.string.pokedex_subtitle),
                 icon = Icons.Default.CatchingPokemon,
                 onClick = onNavigateToPokedex
             )
             HomeCard(
-                title = "Settings",
-                subtitle = "Themes and progress management.",
+                title = stringResource(R.string.settings),
+                subtitle = stringResource(R.string.settings_subtitle),
                 icon = Icons.Default.Settings,
                 onClick = onNavigateToSettings
             )
@@ -75,7 +77,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.weight(1.0f))
             
             Text(
-                text = "v1.0.0",
+                text = stringResource(R.string.version, "1.0.0"),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.outline
             )

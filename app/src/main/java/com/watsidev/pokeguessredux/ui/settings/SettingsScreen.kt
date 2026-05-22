@@ -10,8 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.watsidev.pokeguessredux.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,10 +28,10 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.settings), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
             )
@@ -43,7 +45,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Appearance",
+                text = stringResource(R.string.appearance),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
@@ -54,10 +56,10 @@ fun SettingsScreen(
                 onThemeSelected = onThemeSelected
             )
 
-            Divider(modifier = Modifier.padding(vertical = 8.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
-                text = "Data Management",
+                text = stringResource(R.string.data_management),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 fontWeight = FontWeight.Bold
@@ -69,13 +71,13 @@ fun SettingsScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "Danger Zone",
+                        text = stringResource(R.string.danger_zone),
                         style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.onErrorContainer,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Resetting progress will clear your streak, daily guesses, and discovered Pokémon.",
+                        text = stringResource(R.string.reset_warning),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onErrorContainer
                     )
@@ -84,7 +86,7 @@ fun SettingsScreen(
                         onClick = { showResetDialog = true },
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                     ) {
-                        Text("Reset Progress")
+                        Text(stringResource(R.string.reset_progress))
                     }
                 }
             }
@@ -96,12 +98,12 @@ fun SettingsScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "PokeGuess Redux",
+                    text = stringResource(R.string.home_title),
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "Version 1.0.0",
+                    text = stringResource(R.string.version, "1.0.0"),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(
@@ -119,8 +121,8 @@ fun SettingsScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text("Reset Progress?") },
-            text = { Text("This action cannot be undone. Are you sure?") },
+            title = { Text(stringResource(R.string.reset_confirm_title)) },
+            text = { Text(stringResource(R.string.reset_confirm_text)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -128,12 +130,12 @@ fun SettingsScreen(
                         showResetDialog = false
                     }
                 ) {
-                    Text("Reset", color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.reset), color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel))
                 }
             }
         )
@@ -146,9 +148,9 @@ fun ThemeSelector(
     onThemeSelected: (String) -> Unit
 ) {
     val options = listOf(
-        "system" to "System Default",
-        "light" to "Light",
-        "dark" to "Dark"
+        "system" to stringResource(R.string.system_default),
+        "light" to stringResource(R.string.light),
+        "dark" to stringResource(R.string.dark)
     )
     
     Column(Modifier.selectableGroup()) {

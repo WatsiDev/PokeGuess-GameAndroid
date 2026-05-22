@@ -11,6 +11,7 @@ import com.watsidev.pokeguessredux.data.remote.NamedApiResourceShort
 import com.watsidev.pokeguessredux.data.remote.PokeApiService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -65,12 +66,18 @@ class PokemonRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getPokemon(name: String): Pokemon {
+        val currentLanguage = Locale.getDefault().language
+        
         // 1. Check Memory Cache
-        pokemonCache[name]?.let { return it }
+        pokemonCache[name]?.let { 
+            // We can't easily check language in memory without model update, 
+            // but Room check will handle it if we clear cache or just trust Room.
+            return it 
+        }
 
         // 2. Check Room DB
         val localPokemon = pokemonDao.getPokemonByName(name)
-        if (localPokemon != null) {
+        if (localPokemon != null && localPokemon.languageCode == currentLanguage) {
             val pokemon = mapEntityToModel(localPokemon)
             pokemonCache[name] = pokemon
             return pokemon
@@ -80,23 +87,38 @@ class PokemonRepositoryImpl @Inject constructor(
         return try {
             val response = apiService.getPokemon(name)
             
-            // Extract species name from response (more reliable than string split)
+            // Extract species name from response
             val speciesName = response.species.name
             val speciesResponse = apiService.getPokemonSpecies(speciesName)
             
-            // Fetch evolution chain to determine stage
+            // Fetch evolution chain
             val evolutionChainUrl = speciesResponse.evolutionChain.url
             val chainId = evolutionChainUrl.split("/").filter { it.isNotEmpty() }.last()
             val evolutionChain = apiService.getEvolutionChain(chainId)
             
             val stage = findEvolutionStage(evolutionChain.chain, response.name)
-            val evolutionSteps = flattenEvolutionChain(evolutionChain.chain)
+            
+            // Localized Category
+            val category = speciesResponse.genera.find { it.language.name == currentLanguage }?.genus 
+                ?: speciesResponse.genera.find { it.language.name == "en" }?.genus 
+                ?: ""
 
-            // Extract generation number from generation name
+            // Localized Stats
+            val localizedStats = response.stats.map { statSlot ->
+                val statId = statSlot.stat.url.split("/").filter { it.isNotEmpty() }.last()
+                val statDetail = apiService.getStat(statId)
+                val localizedName = statDetail.names.find { it.language.name == currentLanguage }?.name
+                    ?: statDetail.names.find { it.language.name == "en" }?.name
+                    ?: statSlot.stat.name
+                
+                PokemonStat(localizedName, statSlot.baseStat)
+            }
+
+            // Localized Evolution Steps
+            val evolutionSteps = flattenEvolutionChain(evolutionChain.chain, currentLanguage)
+
             val genName = speciesResponse.generation.name
             val genNumber = parseGeneration(genName)
-
-            val category = speciesResponse.genera.find { it.language.name == "en" }?.genus ?: ""
 
             val pokemon = Pokemon(
                 id = response.id,
@@ -108,27 +130,18 @@ class PokemonRepositoryImpl @Inject constructor(
                 generation = genNumber,
                 imageUrl = response.sprites.other.officialArtwork.frontDefault,
                 category = category,
-                stats = response.stats.map { PokemonStat(it.stat.name, it.baseStat) },
+                stats = localizedStats,
                 evolutionChain = evolutionSteps
             )
             
             // 4. Save to Room
-            pokemonDao.insertPokemon(mapModelToEntity(pokemon))
+            pokemonDao.insertPokemon(mapModelToEntity(pokemon, currentLanguage))
             
             pokemonCache[name] = pokemon
             pokemon
         } catch (e: Exception) {
-            // Fallback for failed fetches - prevents complete crash
-            Pokemon(
-                id = 0,
-                name = name,
-                height = 0,
-                weight = 0,
-                types = emptyList(),
-                evolutionaryStage = 1,
-                generation = 0,
-                imageUrl = null
-            )
+            Log.e("Repo", "Error fetching Pokémon details for $name", e)
+            Pokemon(id = 0, name = name, height = 0, weight = 0, types = emptyList(), evolutionaryStage = 1, generation = 0, imageUrl = null)
         }
     }
 
@@ -162,7 +175,7 @@ class PokemonRepositoryImpl @Inject constructor(
         )
     }
 
-    private fun mapModelToEntity(model: Pokemon): PokemonEntity {
+    private fun mapModelToEntity(model: Pokemon, language: String): PokemonEntity {
         val converters = PokedexConverters()
         return PokemonEntity(
             id = model.id,
@@ -175,7 +188,8 @@ class PokemonRepositoryImpl @Inject constructor(
             imageUrl = model.imageUrl,
             category = model.category,
             stats = converters.fromStatList(model.stats),
-            evolutionChain = converters.fromEvolutionList(model.evolutionChain)
+            evolutionChain = converters.fromEvolutionList(model.evolutionChain),
+            languageCode = language
         )
     }
 
@@ -188,17 +202,37 @@ class PokemonRepositoryImpl @Inject constructor(
         return -1
     }
 
-    private fun flattenEvolutionChain(link: ChainLink): List<EvolutionStep> {
+    private fun flattenEvolutionChain(link: ChainLink, language: String): List<EvolutionStep> {
         val steps = mutableListOf<EvolutionStep>()
         
         fun processLink(current: ChainLink) {
             val id = current.species.url.split("/").filter { it.isNotEmpty() }.last().toInt()
             val detail = current.evolutionDetails?.firstOrNull()
             
+            var triggerName = detail?.trigger?.name ?: ""
+            if (triggerName.isNotEmpty()) {
+                // Fetch localized trigger name
+                // Note: In a production app, we might want to pre-fetch all triggers 
+                // or cache them specifically to avoid many network calls here.
+                runBlocking {
+                    try {
+                        val triggerId = detail?.trigger?.url?.split("/")?.filter { it.isNotEmpty() }?.last()
+                        if (triggerId != null) {
+                            val triggerDetail = apiService.getEvolutionTrigger(triggerId)
+                            triggerName = triggerDetail.names.find { it.language.name == language }?.name
+                                ?: triggerDetail.names.find { it.language.name == "en" }?.name
+                                ?: triggerName
+                        }
+                    } catch (e: Exception) {
+                        // Keep original triggerName
+                    }
+                }
+            }
+            
             steps.add(EvolutionStep(
                 id = id,
                 name = current.species.name,
-                trigger = detail?.trigger?.name ?: "",
+                trigger = triggerName,
                 minLevel = detail?.minLevel,
                 imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
             ))

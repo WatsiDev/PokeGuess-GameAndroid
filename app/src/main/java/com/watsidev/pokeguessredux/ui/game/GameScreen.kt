@@ -21,8 +21,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.watsidev.pokeguessredux.R
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
@@ -56,15 +58,15 @@ fun GameScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (uiState.gameMode == GameMode.DAILY) "Daily Challenge" else "Infinite Mode", fontWeight = FontWeight.Bold) },
+                title = { Text(if (uiState.gameMode == GameMode.DAILY) stringResource(R.string.daily_challenge) else stringResource(R.string.infinite_mode), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 actions = {
                     Text(
-                        "Streak: ${uiState.streak}",
+                        stringResource(R.string.streak, uiState.streak),
                         modifier = Modifier.padding(end = 16.dp),
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -143,7 +145,7 @@ fun SearchBar(
             value = query,
             onValueChange = onQueryChanged,
             modifier = Modifier.fillMaxWidth(),
-            label = { Text("Search Pokemon...") },
+            label = { Text(stringResource(R.string.search_pokemon)) },
             enabled = enabled,
             leadingIcon = { 
                 if (isSearching) {
@@ -235,17 +237,17 @@ fun VictoryModal(
         confirmButton = {
             if (gameMode == GameMode.INFINITE) {
                 Button(onClick = onPlayAgain) {
-                    Text("Play Again")
+                    Text(stringResource(R.string.play_again))
                 }
             } else {
                 Button(onClick = onGoHome) {
-                    Text("Home")
+                    Text(stringResource(R.string.home))
                 }
             }
         },
         title = {
             Text(
-                text = "CATCH SUCCESS!",
+                text = stringResource(R.string.catch_success),
                 fontWeight = FontWeight.Black,
                 color = CorrectGreen,
                 modifier = Modifier.fillMaxWidth(),
@@ -281,7 +283,7 @@ fun VictoryModal(
                 if (gameMode == GameMode.DAILY) {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        "Next Pokémon in:",
+                        stringResource(R.string.next_pokemon_in),
                         style = MaterialTheme.typography.labelMedium
                     )
                     Text(
@@ -339,12 +341,12 @@ fun GuessItem(guess: PokemonComparison) {
                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                AttributeBox("Gen", guess.generation.value.toString(), guess.generation.state, guess.generation.direction)
-                AttributeBox("ID", "#${guess.id.value}", guess.id.state, guess.id.direction)
-                AttributeBox("Stage", "S${guess.evolutionaryStage.value}", guess.evolutionaryStage.state, guess.evolutionaryStage.direction)
-                AttributeBox("Types", guess.types.value.joinToString("\n"), guess.types.state)
-                AttributeBox("Height", "${guess.height.value / 10.0}m", guess.height.state, guess.height.direction)
-                AttributeBox("Weight", "${guess.weight.value / 10.0}kg", guess.weight.state, guess.weight.direction)
+                AttributeBox(stringResource(R.string.attr_gen), guess.generation.value.toString(), guess.generation.state, guess.generation.direction)
+                AttributeBox(stringResource(R.string.attr_id), "#${guess.id.value}", guess.id.state, guess.id.direction)
+                AttributeBox(stringResource(R.string.attr_stage), "S${guess.evolutionaryStage.value}", guess.evolutionaryStage.state, guess.evolutionaryStage.direction)
+                AttributeBox(stringResource(R.string.attr_type), guess.types.value.joinToString("\n"), guess.types.state)
+                AttributeBox(stringResource(R.string.attr_height), "${guess.height.value / 10.0}m", guess.height.state, guess.height.direction)
+                AttributeBox(stringResource(R.string.attr_weight), "${guess.weight.value / 10.0}kg", guess.weight.state, guess.weight.direction)
             }
         }
     }

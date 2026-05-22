@@ -21,7 +21,8 @@ data class PokemonEntity(
     val imageUrl: String?,
     val category: String,
     val stats: String, // JSON
-    val evolutionChain: String // JSON
+    val evolutionChain: String, // JSON
+    val languageCode: String // e.g., "en", "es"
 )
 
 @Entity(tableName = "pokemon_list")

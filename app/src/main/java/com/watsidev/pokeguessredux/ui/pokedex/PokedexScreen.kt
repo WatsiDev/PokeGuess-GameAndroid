@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
+import com.watsidev.pokeguessredux.R
 import coil.request.ImageRequest
 import java.util.Locale
 
@@ -45,10 +47,10 @@ fun PokedexScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text("POKÉDEX", fontWeight = FontWeight.Black) },
+                title = { Text(stringResource(R.string.pokedex_title), fontWeight = FontWeight.Black) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 },
                 colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -127,7 +129,7 @@ fun PokedexScreen(
                             }
                             loadState.append is LoadState.Error -> {
                                 item(span = { GridItemSpan(maxLineSpan) }) {
-                                    Text("Error loading more Pokémon", color = MaterialTheme.colorScheme.error)
+                                    Text(stringResource(R.string.error_loading_more), color = MaterialTheme.colorScheme.error)
                                 }
                             }
                         }
@@ -149,7 +151,7 @@ fun DiscoveryProgress(discovered: Int, total: Int) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Discovery Progress",
+                stringResource(R.string.discovery_progress),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -168,7 +170,7 @@ fun DiscoveryProgress(discovered: Int, total: Int) {
             trackColor = MaterialTheme.colorScheme.primaryContainer
         )
         Text(
-            text = "${(progress * 100).toInt()}% Complete",
+            text = stringResource(R.string.complete_percent, (progress * 100).toInt()),
             style = MaterialTheme.typography.labelSmall,
             modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
         )
@@ -208,7 +210,7 @@ fun PokedexEntry(id: Int, name: String, isDiscovered: Boolean, onClick: () -> Un
                         .data(imageUrl)
                         .crossfade(true)
                         .build(),
-                    contentDescription = if (isDiscovered) name else "Undiscovered",
+                    contentDescription = if (isDiscovered) name else stringResource(R.string.undiscovered),
                     modifier = Modifier.size(64.dp),
                     colorFilter = if (!isDiscovered) ColorFilter.tint(Color.Black) else null,
                     alpha = if (isDiscovered) 1f else 0.5f

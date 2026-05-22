@@ -19,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -27,8 +28,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.watsidev.pokeguessredux.R
 import com.watsidev.pokeguessredux.data.model.Pokemon
 import com.watsidev.pokeguessredux.ui.theme.PokemonTypeColors
+import com.watsidev.pokeguessredux.data.model.EvolutionStep
+import java.util.*
 import com.watsidev.pokeguessredux.ui.utils.BottomCurvedShape
 import java.util.*
 
@@ -49,15 +53,15 @@ fun PokemonDetailScreen(
         topBar = {
             val mainTypeColor = uiState.pokemon?.types?.firstOrNull()?.let { PokemonTypeColors.getColorForType(it) } ?: MaterialTheme.colorScheme.primary
             TopAppBar(
-                title = { Text("Pokédex", color = Color.White) },
+                title = { Text(stringResource(R.string.pokedex), color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back), tint = Color.White)
                     }
                 },
                 actions = {
                     IconButton(onClick = { /* TODO: Favorite */ }) {
-                        Icon(Icons.Default.StarBorder, contentDescription = "Favorite", tint = Color.White)
+                        Icon(Icons.Default.StarBorder, contentDescription = stringResource(R.string.favorite), tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -167,18 +171,18 @@ fun PokemonDetailContent(pokemon: Pokemon) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                InfoItem(label = "Category", value = pokemon.category)
+                InfoItem(label = stringResource(R.string.category), value = pokemon.category)
                 VerticalDivider(modifier = Modifier.height(40.dp))
-                InfoItem(label = "Height", value = String.format(Locale.getDefault(), "%.1f m", pokemon.height / 10f))
+                InfoItem(label = stringResource(R.string.height), value = String.format(Locale.getDefault(), "%.1f m", pokemon.height / 10f))
                 VerticalDivider(modifier = Modifier.height(40.dp))
-                InfoItem(label = "Weight", value = String.format(Locale.getDefault(), "%.1f kg", pokemon.weight / 10f))
+                InfoItem(label = stringResource(R.string.weight), value = String.format(Locale.getDefault(), "%.1f kg", pokemon.weight / 10f))
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
             // Evolution Section
             Text(
-                text = "Evolution",
+                text = stringResource(R.string.evolution),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = mainTypeColor,
@@ -194,7 +198,7 @@ fun PokemonDetailContent(pokemon: Pokemon) {
 
             // Base Stats
             Text(
-                text = "Base stats",
+                text = stringResource(R.string.base_stats),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = mainTypeColor,
@@ -209,7 +213,7 @@ fun PokemonDetailContent(pokemon: Pokemon) {
             }
             
             val totalStats = pokemon.stats.sumOf { it.value }
-            StatRow(statName = "TOTAL", statValue = totalStats, maxStat = 700, color = mainTypeColor, isBold = true)
+            StatRow(statName = stringResource(R.string.stat_total), statValue = totalStats, maxStat = 700, color = mainTypeColor, isBold = true)
 
             Spacer(modifier = Modifier.height(32.dp))
         }
@@ -241,7 +245,7 @@ fun InfoItem(label: String, value: String) {
 }
 
 @Composable
-fun EvolutionChainView(chain: List<com.watsidev.pokeguessredux.data.model.EvolutionStep>) {
+fun EvolutionChainView(chain: List<EvolutionStep>) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -266,11 +270,11 @@ fun EvolutionChainView(chain: List<com.watsidev.pokeguessredux.data.model.Evolut
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(text = nextStep.trigger.replace("-", " ").replaceFirstChar { it.uppercase() }, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                     if (nextStep.minLevel != null) {
-                        Text(text = "Level ${nextStep.minLevel}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text(text = stringResource(R.string.level_short, nextStep.minLevel), style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                     }
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack, // Should be ArrowForward but using back flipped
-                        contentDescription = "evolves to",
+                        contentDescription = stringResource(R.string.evolves_to),
                         modifier = Modifier.size(16.dp).graphicsLayer(scaleX = -1f),
                         tint = Color.LightGray
                     )

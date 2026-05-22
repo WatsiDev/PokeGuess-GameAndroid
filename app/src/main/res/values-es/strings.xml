@@ -1,0 +1,64 @@
+<resources>
+    <string name="app_name">PokeGuess Redux</string>
+
+    <!-- Home Screen -->
+    <string name="home_title">POKEGUESS REDUX</string>
+    <string name="daily_challenge">Desafío Diario</string>
+    <string name="daily_challenge_subtitle">Un Pokémon por día. ¡Mantén tu racha!</string>
+    <string name="infinite_mode">Modo Infinito</string>
+    <string name="infinite_mode_subtitle">Practica tanto como quieras.</string>
+    <string name="pokedex">Pokédex</string>
+    <string name="pokedex_subtitle">Mira tu colección y progreso.</string>
+    <string name="settings">Configuración</string>
+    <string name="settings_subtitle">Temas y gestión de progreso.</string>
+
+    <!-- Game Screen -->
+    <string name="back">Atrás</string>
+    <string name="streak">Racha: %1$d</string>
+    <string name="search_pokemon">Buscar Pokémon…</string>
+    <string name="catch_success">¡CAPTURA EXITOSA!</string>
+    <string name="play_again">Jugar de Nuevo</string>
+    <string name="home">Inicio</string>
+    <string name="next_pokemon_in">Siguiente Pokémon en:</string>
+    <string name="attr_gen">Gen</string>
+    <string name="attr_id">ID</string>
+    <string name="attr_type">Tipos</string>
+    <string name="attr_height">Altura</string>
+    <string name="attr_weight">Peso</string>
+    <string name="attr_stage">Etapa</string>
+
+    <!-- Pokedex Screen -->
+    <string name="pokedex_title">POKÉDEX</string>
+    <string name="discovery_progress">Progreso de Descubrimiento</string>
+    <string name="complete_percent">%1$d%% Completado</string>
+    <string name="no_pokemon_found">No se encontraron datos de Pokémon.</string>
+    <string name="retry">Reintentar</string>
+    <string name="error_loading_more">Error al cargar más Pokémon</string>
+    <string name="undiscovered">No descubierto</string>
+
+    <!-- Detail Screen -->
+    <string name="favorite">Favorito</string>
+    <string name="category">Categoría</string>
+    <string name="height">Altura</string>
+    <string name="weight">Peso</string>
+    <string name="evolution">Evolución</string>
+    <string name="base_stats">Estadísticas base</string>
+    <string name="stat_total">TOTAL</string>
+    <string name="evolves_to">evoluciona a</string>
+    <string name="level_short">Nivel %1$d</string>
+
+    <!-- Settings Screen -->
+    <string name="appearance">Apariencia</string>
+    <string name="system_default">Predeterminado del Sistema</string>
+    <string name="light">Claro</string>
+    <string name="dark">Oscuro</string>
+    <string name="data_management">Gestión de Datos</string>
+    <string name="danger_zone">Zona de Peligro</string>
+    <string name="reset_warning">Reiniciar el progreso borrará tu racha, intentos diarios y Pokémon descubiertos.</string>
+    <string name="reset_progress">Reiniciar Progreso</string>
+    <string name="reset_confirm_title">¿Reiniciar Progreso?</string>
+    <string name="reset_confirm_text">Esta acción no se puede deshacer. ¿Estás seguro?</string>
+    <string name="reset">Reiniciar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="version">Versión %1$s</string>
+</resources>
