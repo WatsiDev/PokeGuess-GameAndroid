@@ -6,8 +6,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -21,6 +25,9 @@ import com.watsidev.pokeguessredux.ui.pokedex.PokedexScreen
 import com.watsidev.pokeguessredux.ui.pokedex.PokemonDetailScreen
 import com.watsidev.pokeguessredux.ui.settings.SettingsScreen
 import com.watsidev.pokeguessredux.ui.game.GenerationScreen
+import com.watsidev.pokeguessredux.ui.game.MemoryDifficultyScreen
+import com.watsidev.pokeguessredux.ui.game.MemoryGameScreen
+import com.watsidev.pokeguessredux.ui.game.MemoryDifficulty
 import com.watsidev.pokeguessredux.ui.theme.MyApplicationTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -50,6 +57,19 @@ class MainActivity : ComponentActivity() {
 
             MyApplicationTheme(darkTheme = darkTheme) {
                 val navController = rememberNavController()
+
+                if (uiState.shouldShowUpdateNotice) {
+                    AlertDialog(
+                        onDismissRequest = { },
+                        title = { Text(stringResource(R.string.update_notice_title)) },
+                        text = { Text(stringResource(R.string.update_notice_message)) },
+                        confirmButton = {
+                            TextButton(onClick = { viewModel.dismissUpdateNotice() }) {
+                                Text(stringResource(R.string.ok))
+                            }
+                        }
+                    )
+                }
                 
                 NavHost(navController = navController, startDestination = "home") {
                     composable("home") {
@@ -65,6 +85,9 @@ class MainActivity : ComponentActivity() {
                             onNavigateToGenerations = {
                                 navController.navigate("generations")
                             },
+                            onNavigateToMemory = {
+                                navController.navigate("memory_difficulty")
+                            },
                             onNavigateToPokedex = { navController.navigate("pokedex") },
                             onNavigateToSettings = { navController.navigate("settings") }
                         )
@@ -78,9 +101,41 @@ class MainActivity : ComponentActivity() {
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
+                    composable("memory_difficulty") {
+                        MemoryDifficultyScreen(
+                            onDifficultySelected = { diff ->
+                                navController.navigate("memory_game/${diff.name}")
+                            },
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("memory_game/{difficultyName}") { backStackEntry ->
+                        val diffName = backStackEntry.arguments?.getString("difficultyName") ?: "EASY"
+                        val difficulty = MemoryDifficulty.valueOf(diffName)
+                        MemoryGameScreen(
+                            difficulty = difficulty,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
                     composable("game") {
                         GameScreen(
                             viewModel = viewModel,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("memory_difficulty") {
+                        MemoryDifficultyScreen(
+                            onDifficultySelected = { diff ->
+                                navController.navigate("memory_game/${diff.name}")
+                            },
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("memory_game/{difficultyName}") { backStackEntry ->
+                        val diffName = backStackEntry.arguments?.getString("difficultyName") ?: "EASY"
+                        val difficulty = MemoryDifficulty.valueOf(diffName)
+                        MemoryGameScreen(
+                            difficulty = difficulty,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
@@ -96,6 +151,22 @@ class MainActivity : ComponentActivity() {
                         val pokemonName = backStackEntry.arguments?.getString("pokemonName") ?: ""
                         PokemonDetailScreen(
                             pokemonName = pokemonName,
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("memory_difficulty") {
+                        MemoryDifficultyScreen(
+                            onDifficultySelected = { diff ->
+                                navController.navigate("memory_game/${diff.name}")
+                            },
+                            onNavigateBack = { navController.popBackStack() }
+                        )
+                    }
+                    composable("memory_game/{difficultyName}") { backStackEntry ->
+                        val diffName = backStackEntry.arguments?.getString("difficultyName") ?: "EASY"
+                        val difficulty = MemoryDifficulty.valueOf(diffName)
+                        MemoryGameScreen(
+                            difficulty = difficulty,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }

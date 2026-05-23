@@ -27,6 +27,7 @@ fun HomeScreen(
     onNavigateToDaily: () -> Unit,
     onNavigateToInfinite: () -> Unit,
     onNavigateToGenerations: () -> Unit,
+    onNavigateToMemory: () -> Unit,
     onNavigateToPokedex: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
@@ -67,6 +68,12 @@ fun HomeScreen(
                 subtitle = stringResource(R.string.generations_subtitle),
                 icon = Icons.Default.CatchingPokemon,
                 onClick = onNavigateToGenerations
+            )
+            HomeCard(
+                title = stringResource(R.string.memory_mode),
+                subtitle = stringResource(R.string.memory_subtitle),
+                icon = Icons.Default.CatchingPokemon,
+                onClick = onNavigateToMemory
             )
             HomeCard(
                 title = stringResource(R.string.pokedex),

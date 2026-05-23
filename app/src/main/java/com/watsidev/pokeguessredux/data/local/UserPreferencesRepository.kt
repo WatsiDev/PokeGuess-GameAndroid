@@ -3,6 +3,7 @@ package com.watsidev.pokeguessredux.data.local
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -24,6 +25,7 @@ class UserPreferencesRepository @Inject constructor(
     private val DAILY_GUESSES = stringPreferencesKey("daily_guesses")
     private val CAPTURED_POKEMON_IDS = stringPreferencesKey("captured_pokemon_ids")
     private val THEME_KEY = stringPreferencesKey("theme_preference")
+    private val HAS_SHOWN_UPDATE_NOTICE = booleanPreferencesKey("has_shown_update_notice")
 
     val currentStreak: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[STREAK_KEY] ?: 0
@@ -44,6 +46,10 @@ class UserPreferencesRepository @Inject constructor(
 
     val themePreference: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[THEME_KEY] ?: "system"
+    }
+
+    val hasShownUpdateNotice: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[HAS_SHOWN_UPDATE_NOTICE] ?: false
     }
 
     suspend fun updateStreak(streak: Int) {
@@ -67,6 +73,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun updateTheme(theme: String) {
         context.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme
+        }
+    }
+
+    suspend fun setUpdateNoticeShown() {
+        context.dataStore.edit { preferences ->
+            preferences[HAS_SHOWN_UPDATE_NOTICE] = true
         }
     }
 

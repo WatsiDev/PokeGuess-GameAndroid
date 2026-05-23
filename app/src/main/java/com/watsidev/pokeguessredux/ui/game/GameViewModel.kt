@@ -39,6 +39,7 @@ data class GameUiState(
     val timeUntilNext: String = "",
     val capturedIds: Set<Int> = emptySet(),
     val theme: String = "system",
+    val shouldShowUpdateNotice: Boolean = false,
     val error: String? = null
 )
 
@@ -83,6 +84,13 @@ class GameViewModel @Inject constructor(
                 launch {
                     userPreferences.themePreference.collect { theme ->
                         _uiState.update { it.copy(theme = theme) }
+                    }
+                }
+
+                // Collect notice state
+                launch {
+                    userPreferences.hasShownUpdateNotice.collect { shown ->
+                        _uiState.update { it.copy(shouldShowUpdateNotice = !shown) }
                     }
                 }
 
@@ -299,6 +307,13 @@ class GameViewModel @Inject constructor(
     fun setTheme(theme: String) {
         viewModelScope.launch {
             userPreferences.updateTheme(theme)
+        }
+    }
+
+    fun dismissUpdateNotice() {
+        viewModelScope.launch {
+            userPreferences.setUpdateNoticeShown()
+            _uiState.update { it.copy(shouldShowUpdateNotice = false) }
         }
     }
 }

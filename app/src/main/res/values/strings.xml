@@ -16,6 +16,27 @@
     <string name="generation_selection">Select Generation</string>
     <string name="generation_x">Generation %1$d</string>
 
+    <!-- Memory Game -->
+    <string name="memory_mode">Memory Game</string>
+    <string name="memory_subtitle">Match pairs of Pokémon cards.</string>
+    <string name="difficulty_selection">Select Difficulty</string>
+    <string name="diff_easy">Easy</string>
+    <string name="diff_easy_desc">4 Pairs - 30s</string>
+    <string name="diff_normal">Normal</string>
+    <string name="diff_normal_desc">6 Pairs - 45s</string>
+    <string name="diff_hard">Hard</string>
+    <string name="diff_hard_desc">8 Pairs - 60s</string>
+    <string name="diff_expert">Expert</string>
+    <string name="diff_expert_desc">12 Pairs - 90s</string>
+    <string name="diff_master">Pokemon Master</string>
+    <string name="diff_master_desc">18 Pairs - 150s</string>
+    <string name="time_left">Time: %1$ds</string>
+    <string name="pairs_found">Pairs: %1$d/%2$d</string>
+    <string name="game_over">GAME OVER</string>
+    <string name="time_up">Time\'s Up!</string>
+    <string name="victory">VICTORY!</string>
+    <string name="all_pairs_found">You found all pairs!</string>
+
     <!-- Game Screen -->
     <string name="back">Back</string>
     <string name="streak">Streak: %1$d</string>
@@ -50,6 +71,11 @@
     <string name="stat_total">TOTAL</string>
     <string name="evolves_to">evolves to</string>
     <string name="level_short">Level %1$d</string>
+    <string name="ok">OK</string>
+
+    <!-- Update Notice -->
+    <string name="update_notice_title">Important Update</string>
+    <string name="update_notice_message">Due to a database issue in a previous version, some players may experience a progress reset after updating the app.\n\nThis update fixes the issue and improves overall stability to prevent future problems.\n\nWe sincerely apologize for the inconvenience and appreciate your support while PokeGuess Redux continues to improve.</string>
 
     <!-- Settings Screen -->
     <string name="appearance">Appearance</string>

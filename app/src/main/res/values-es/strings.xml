@@ -16,6 +16,27 @@
     <string name="generation_selection">Seleccionar Generación</string>
     <string name="generation_x">Generación %1$d</string>
 
+    <!-- Memory Game -->
+    <string name="memory_mode">Memorama</string>
+    <string name="memory_subtitle">Encuentra los pares de cartas Pokémon.</string>
+    <string name="difficulty_selection">Seleccionar Dificultad</string>
+    <string name="diff_easy">Fácil</string>
+    <string name="diff_easy_desc">4 Pares - 30s</string>
+    <string name="diff_normal">Normal</string>
+    <string name="diff_normal_desc">6 Pares - 45s</string>
+    <string name="diff_hard">Difícil</string>
+    <string name="diff_hard_desc">8 Pares - 60s</string>
+    <string name="diff_expert">Experto</string>
+    <string name="diff_expert_desc">12 Pares - 90s</string>
+    <string name="diff_master">Maestro Pokémon</string>
+    <string name="diff_master_desc">18 Pares - 150s</string>
+    <string name="time_left">Tiempo: %1$ds</string>
+    <string name="pairs_found">Pares: %1$d/%2$d</string>
+    <string name="game_over">FIN DEL JUEGO</string>
+    <string name="time_up">¡Se acabó el tiempo!</string>
+    <string name="victory">¡VICTORIA!</string>
+    <string name="all_pairs_found">¡Encontraste todos los pares!</string>
+
     <!-- Game Screen -->
     <string name="back">Atrás</string>
     <string name="streak">Racha: %1$d</string>
@@ -50,6 +71,11 @@
     <string name="stat_total">TOTAL</string>
     <string name="evolves_to">evoluciona a</string>
     <string name="level_short">Nivel %1$d</string>
+    <string name="ok">Entendido</string>
+
+    <!-- Update Notice -->
+    <string name="update_notice_title">Actualización Importante</string>
+    <string name="update_notice_message">Debido a un problema con la base de datos en una versión anterior, algunos jugadores podrían experimentar un reinicio de su progreso después de actualizar la aplicación.\n\nEsta actualización soluciona el problema y mejora la estabilidad general para evitar problemas futuros.\n\nPedimos disculpas sinceramente por las molestias y agradecemos tu apoyo mientras PokeGuess Redux continúa mejorando.</string>
 
     <!-- Settings Screen -->
     <string name="appearance">Apariencia</string>
