@@ -57,8 +57,13 @@ fun GameScreen(
 
     Scaffold(
         topBar = {
+            val title = when(uiState.gameMode) {
+                GameMode.DAILY -> stringResource(R.string.daily_challenge)
+                GameMode.INFINITE -> stringResource(R.string.infinite_mode)
+                GameMode.GENERATION -> uiState.selectedGeneration?.let { stringResource(R.string.generation_x, it) } ?: ""
+            }
             TopAppBar(
-                title = { Text(if (uiState.gameMode == GameMode.DAILY) stringResource(R.string.daily_challenge) else stringResource(R.string.infinite_mode), fontWeight = FontWeight.Bold) },
+                title = { Text(title, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))

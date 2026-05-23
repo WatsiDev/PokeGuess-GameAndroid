@@ -11,6 +11,10 @@
     <string name="pokedex_subtitle">Mira tu colección y progreso.</string>
     <string name="settings">Configuración</string>
     <string name="settings_subtitle">Temas y gestión de progreso.</string>
+    <string name="generations_mode">Modo Generaciones</string>
+    <string name="generations_subtitle">Juega con Pokémon de una generación específica.</string>
+    <string name="generation_selection">Seleccionar Generación</string>
+    <string name="generation_x">Generación %1$d</string>
 
     <!-- Game Screen -->
     <string name="back">Atrás</string>

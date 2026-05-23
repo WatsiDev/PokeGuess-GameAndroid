@@ -35,21 +35,45 @@ class PokemonRepositoryImpl @Inject constructor(
     override suspend fun getPokemonList(): List<NamedApiResourceShort> {
         val localCount = pokemonDao.getPokemonListCount()
         if (localCount > 0) {
-            return pokemonDao.getAllPokemonList().map {
-                NamedApiResourceShort(it.name, it.url)
+            val list = pokemonDao.getAllPokemonList()
+            // If we have items but generations are 0, we need to re-sync
+            if (list.any { it.generation != 0 }) {
+                return list.map { NamedApiResourceShort(it.name, it.url) }
             }
         }
 
         return try {
+            Log.d("Repo", "Fetching and Syncing official generations from API")
             val response = apiService.getPokemonList(limit = 1025)
+            
+            // Map each Pokemon to its generation based on ID (PokeAPI official ranges)
             val entities = response.results.map { 
                 val id = it.url.split("/").filter { s -> s.isNotEmpty() }.last().toInt()
-                PokemonListEntity(id, it.name, it.url)
+                val gen = when {
+                    id <= 151 -> 1
+                    id <= 251 -> 2
+                    id <= 386 -> 3
+                    id <= 493 -> 4
+                    id <= 649 -> 5
+                    id <= 721 -> 6
+                    id <= 809 -> 7
+                    id <= 905 -> 8
+                    else -> 9
+                }
+                PokemonListEntity(id, it.name, it.url, gen)
             }
             pokemonDao.insertPokemonList(entities)
             response.results
         } catch (e: Exception) {
             emptyList()
+        }
+    }
+
+    override suspend fun getPokemonByGeneration(gen: Int): List<NamedApiResourceShort> {
+        // Ensure list is populated first
+        getPokemonList()
+        return pokemonDao.getPokemonByGeneration(gen).map { 
+            NamedApiResourceShort(it.name, it.url)
         }
     }
     

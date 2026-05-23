@@ -22,11 +22,12 @@ import javax.inject.Inject
 import kotlin.random.Random
 
 enum class GameMode {
-    DAILY, INFINITE
+    DAILY, INFINITE, GENERATION
 }
 
 data class GameUiState(
     val gameMode: GameMode = GameMode.DAILY,
+    val selectedGeneration: Int? = null,
     val targetPokemon: Pokemon? = null,
     val guesses: List<PokemonComparison> = emptyList(),
     val isGameOver: Boolean = false,
@@ -117,13 +118,22 @@ class GameViewModel @Inject constructor(
         }
     }
 
-    fun setGameMode(mode: GameMode) {
+    fun setGameMode(mode: GameMode, generation: Int? = null) {
         viewModelScope.launch {
-            _uiState.update { it.copy(gameMode = mode, guesses = emptyList(), isGameOver = false) }
-            if (mode == GameMode.DAILY) {
-                setupDailyGame()
-            } else {
-                setupInfiniteGame()
+            _uiState.update { 
+                it.copy(
+                    gameMode = mode, 
+                    selectedGeneration = generation,
+                    guesses = emptyList(), 
+                    isGameOver = false 
+                ) 
+            }
+            when (mode) {
+                GameMode.DAILY -> setupDailyGame()
+                GameMode.INFINITE -> setupInfiniteGame()
+                GameMode.GENERATION -> {
+                    if (generation != null) setupGenerationGame(generation)
+                }
             }
         }
     }
@@ -177,6 +187,20 @@ class GameViewModel @Inject constructor(
         _uiState.update { it.copy(targetPokemon = target) }
     }
 
+    private suspend fun setupGenerationGame(gen: Int) {
+        _uiState.update { it.copy(isLoading = true) }
+        try {
+            val genPokemon = repository.getPokemonByGeneration(gen)
+            if (genPokemon.isNotEmpty()) {
+                val randomIndex = Random.nextInt(genPokemon.size)
+                val target = repository.getPokemon(genPokemon[randomIndex].name)
+                _uiState.update { it.copy(targetPokemon = target, isLoading = false) }
+            }
+        } catch (e: Exception) {
+            _uiState.update { it.copy(error = e.message, isLoading = false) }
+        }
+    }
+
     fun onSearchQueryChanged(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
         searchJob?.cancel()
@@ -188,7 +212,14 @@ class GameViewModel @Inject constructor(
                     _uiState.update { it.copy(isSearching = true) }
                     
                     // Offline Search: Filter from allPokemon list (which is loaded from Room/API in loadInitialData)
-                    val shortResults = allPokemon.filter { 
+                    val gen = _uiState.value.selectedGeneration
+                    val filteredList = if (gen != null) {
+                        repository.getPokemonByGeneration(gen)
+                    } else {
+                        allPokemon
+                    }
+
+                    val shortResults = filteredList.filter {
                         it.name.contains(query, ignoreCase = true) 
                     }.take(10)
                     

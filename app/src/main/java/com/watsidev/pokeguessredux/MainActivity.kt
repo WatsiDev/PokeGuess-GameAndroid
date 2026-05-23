@@ -20,6 +20,7 @@ import com.watsidev.pokeguessredux.ui.home.HomeScreen
 import com.watsidev.pokeguessredux.ui.pokedex.PokedexScreen
 import com.watsidev.pokeguessredux.ui.pokedex.PokemonDetailScreen
 import com.watsidev.pokeguessredux.ui.settings.SettingsScreen
+import com.watsidev.pokeguessredux.ui.game.GenerationScreen
 import com.watsidev.pokeguessredux.ui.theme.MyApplicationTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -61,8 +62,20 @@ class MainActivity : ComponentActivity() {
                                 viewModel.setGameMode(GameMode.INFINITE)
                                 navController.navigate("game")
                             },
+                            onNavigateToGenerations = {
+                                navController.navigate("generations")
+                            },
                             onNavigateToPokedex = { navController.navigate("pokedex") },
                             onNavigateToSettings = { navController.navigate("settings") }
+                        )
+                    }
+                    composable("generations") {
+                        GenerationScreen(
+                            onGenerationSelected = { gen ->
+                                viewModel.setGameMode(GameMode.GENERATION, gen)
+                                navController.navigate("game")
+                            },
+                            onNavigateBack = { navController.popBackStack() }
                         )
                     }
                     composable("game") {

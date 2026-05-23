@@ -1,7 +1,6 @@
 package com.watsidev.pokeguessredux.data.local
 
 import androidx.room.*
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface PokemonDao {
@@ -21,6 +20,12 @@ interface PokemonDao {
 
     @Query("SELECT * FROM pokemon_list WHERE name LIKE :query || '%'")
     suspend fun searchPokemonNames(query: String): List<PokemonListEntity>
+
+    @Query("SELECT * FROM pokemon_list WHERE generation = :gen")
+    suspend fun getPokemonByGeneration(gen: Int): List<PokemonListEntity>
+
+    @Query("SELECT * FROM pokemon_list WHERE name LIKE :query || '%' AND generation = :gen")
+    suspend fun searchPokemonByGeneration(query: String, gen: Int): List<PokemonListEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPokemonList(list: List<PokemonListEntity>)

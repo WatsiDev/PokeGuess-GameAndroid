@@ -26,6 +26,7 @@ import com.watsidev.pokeguessredux.R
 fun HomeScreen(
     onNavigateToDaily: () -> Unit,
     onNavigateToInfinite: () -> Unit,
+    onNavigateToGenerations: () -> Unit,
     onNavigateToPokedex: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
@@ -60,6 +61,12 @@ fun HomeScreen(
                 subtitle = stringResource(R.string.infinite_mode_subtitle),
                 icon = Icons.Default.AllInclusive,
                 onClick = onNavigateToInfinite
+            )
+            HomeCard(
+                title = stringResource(R.string.generations_mode),
+                subtitle = stringResource(R.string.generations_subtitle),
+                icon = Icons.Default.CatchingPokemon,
+                onClick = onNavigateToGenerations
             )
             HomeCard(
                 title = stringResource(R.string.pokedex),

@@ -29,7 +29,8 @@ data class PokemonEntity(
 data class PokemonListEntity(
     @PrimaryKey val id: Int,
     val name: String,
-    val url: String
+    val url: String,
+    val generation: Int = 0 // New field for official generation
 )
 
 class PokedexConverters {
