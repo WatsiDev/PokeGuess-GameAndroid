@@ -10,7 +10,7 @@ import androidx.room.TypeConverters
         PokemonEntity::class,
         PokemonListEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(PokedexConverters::class)
