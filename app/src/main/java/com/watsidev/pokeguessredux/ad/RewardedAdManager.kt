@@ -22,7 +22,7 @@ class RewardedAdManager @Inject constructor(
 ) {
     private var rewardedAd: RewardedAd? = null
     private var isLoading = false
-    private val adUnitId = "ca-app-pub-3940256099942544/5224354917" // Test ID
+    private val adUnitId = "ca-app-pub-9489490067134108/5667420297" // Test: ca-app-pub-3940256099942544/5224354917
 
     private val _isAdAvailable = MutableStateFlow(false)
     val isAdAvailable: StateFlow<Boolean> = _isAdAvailable.asStateFlow()

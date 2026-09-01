@@ -154,7 +154,7 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.outline
                 )
                 
-                BannerAd(adUnitId = "ca-app-pub-3940256099942544/6300978111")
+                BannerAd(adUnitId = "ca-app-pub-9489490067134108/7404385243") // Test: ca-app-pub-3940256099942544/6300978111
                 
                 Spacer(modifier = Modifier.height(16.dp))
             }

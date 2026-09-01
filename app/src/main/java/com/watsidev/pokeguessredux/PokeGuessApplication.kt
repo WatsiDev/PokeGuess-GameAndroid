@@ -86,7 +86,7 @@ class PokeGuessApplication : Application(), Application.ActivityLifecycleCallbac
             val request = AdRequest.Builder().build()
             AppOpenAd.load(
                 this@PokeGuessApplication,
-                "ca-app-pub-3940256099942544/9257395921",
+                "ca-app-pub-9489490067134108/9339253176", // Test: ca-app-pub-3940256099942544/9257395921
                 request,
                 object : AppOpenAdLoadCallback() {
                     /**

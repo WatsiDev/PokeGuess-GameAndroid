@@ -46,7 +46,7 @@ fun GenerationScreen(
             )
         },
         bottomBar = {
-            BannerAd(adUnitId = "ca-app-pub-3940256099942544/6300978111")
+            BannerAd(adUnitId = "ca-app-pub-9489490067134108/3900254505") // Test: ca-app-pub-3940256099942544/6300978111
         }
     ) { innerPadding ->
         LazyVerticalGrid(
