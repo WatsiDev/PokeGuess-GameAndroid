@@ -206,8 +206,7 @@ class GameViewModel @Inject constructor(
 
     private suspend fun setupInfiniteGame() {
         val randomIndex = Random.nextInt(allPokemon.size)
-        //val target = repository.getPokemon(allPokemon[randomIndex].name)
-        val target = repository.getPokemon(allPokemon[150].name)
+        val target = repository.getPokemon(allPokemon[randomIndex].name)
         _uiState.update { it.copy(targetPokemon = target) }
     }
 

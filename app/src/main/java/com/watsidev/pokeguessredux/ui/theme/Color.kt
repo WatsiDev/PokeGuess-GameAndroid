@@ -25,8 +25,8 @@ val SurfaceLight = Color.White
 val OnSurfaceLight = PokedexBlack
 
 // Dark Palette
-val PrimaryDark = Color(0xFFFFB4A9)
-val OnPrimaryDark = Color(0xFF690003)
+val PrimaryDark = PokedexRed
+val OnPrimaryDark = Color.White
 val SecondaryDark = Color(0xFFC0C0C0)
 val OnSecondaryDark = Color(0xFF2D2D2D)
 
