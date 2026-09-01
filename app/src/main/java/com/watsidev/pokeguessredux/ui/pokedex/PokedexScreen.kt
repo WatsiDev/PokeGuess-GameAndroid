@@ -29,6 +29,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.watsidev.pokeguessredux.R
 import coil.request.ImageRequest
+import com.watsidev.pokeguessredux.ui.components.BannerAd
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +60,9 @@ fun PokedexScreen(
                     navigationIconContentColor = MaterialTheme.colorScheme.onPrimary
                 )
             )
+        },
+        bottomBar = {
+            BannerAd(adUnitId = "ca-app-pub-3940256099942544/6300978111")
         }
     ) { innerPadding ->
         when {

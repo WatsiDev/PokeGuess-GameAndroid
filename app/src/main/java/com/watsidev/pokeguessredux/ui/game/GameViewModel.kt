@@ -2,10 +2,12 @@ package com.watsidev.pokeguessredux.ui.game
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.watsidev.pokeguessredux.ad.RewardedAdManager
 import com.watsidev.pokeguessredux.data.local.UserPreferencesRepository
 import com.watsidev.pokeguessredux.data.model.Pokemon
 import com.watsidev.pokeguessredux.data.remote.NamedApiResourceShort
 import com.watsidev.pokeguessredux.data.repository.PokemonRepository
+import com.watsidev.pokeguessredux.domain.model.HintType
 import com.watsidev.pokeguessredux.domain.model.MatchState
 import com.watsidev.pokeguessredux.domain.model.PokemonComparison
 import com.watsidev.pokeguessredux.domain.usecase.ComparePokemonUseCase
@@ -38,6 +40,8 @@ data class GameUiState(
     val streak: Int = 0,
     val timeUntilNext: String = "",
     val capturedIds: Set<Int> = emptySet(),
+    val revealedHints: Set<HintType> = emptySet(),
+    val isAdAvailable: Boolean = false,
     val theme: String = "system",
     val shouldShowUpdateNotice: Boolean = false,
     val error: String? = null
@@ -47,7 +51,8 @@ data class GameUiState(
 class GameViewModel @Inject constructor(
     private val repository: PokemonRepository,
     private val userPreferences: UserPreferencesRepository,
-    private val comparePokemonUseCase: ComparePokemonUseCase
+    private val comparePokemonUseCase: ComparePokemonUseCase,
+    private val rewardedAdManager: RewardedAdManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(GameUiState())
@@ -94,9 +99,18 @@ class GameViewModel @Inject constructor(
                     }
                 }
 
+                // Monitor ad availability reactively
+                launch {
+                    rewardedAdManager.isAdAvailable.collect { available ->
+                        _uiState.update { it.copy(isAdAvailable = available) }
+                    }
+                }
+
                 // Initial setup for Daily mode
                 setupDailyGame()
                 startTimeUntilNextUpdate()
+
+            } catch (e: Exception) {
 
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
@@ -132,7 +146,8 @@ class GameViewModel @Inject constructor(
                 it.copy(
                     gameMode = mode, 
                     selectedGeneration = generation,
-                    guesses = emptyList(), 
+                    guesses = emptyList(),
+                    revealedHints = emptySet(),
                     isGameOver = false 
                 ) 
             }
@@ -191,7 +206,8 @@ class GameViewModel @Inject constructor(
 
     private suspend fun setupInfiniteGame() {
         val randomIndex = Random.nextInt(allPokemon.size)
-        val target = repository.getPokemon(allPokemon[randomIndex].name)
+        //val target = repository.getPokemon(allPokemon[randomIndex].name)
+        val target = repository.getPokemon(allPokemon[150].name)
         _uiState.update { it.copy(targetPokemon = target) }
     }
 
@@ -314,6 +330,40 @@ class GameViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferences.setUpdateNoticeShown()
             _uiState.update { it.copy(shouldShowUpdateNotice = false) }
+        }
+    }
+
+    fun onHintRequested(activity: android.app.Activity) {
+        if (rewardedAdManager.isAdAvailable()) {
+            rewardedAdManager.showAd(activity) {
+                revealNewHint()
+            }
+        } else {
+            rewardedAdManager.loadAd()
+        }
+    }
+
+    private fun revealNewHint() {
+        val target = _uiState.value.targetPokemon ?: return
+        val currentGuesses = _uiState.value.guesses
+        val alreadyRevealed = _uiState.value.revealedHints
+
+        // Determine which attributes are already "solved" (correct in any guess)
+        val solvedAttributes = mutableSetOf<HintType>()
+        currentGuesses.forEach { guess ->
+            if (guess.generation.state == MatchState.CORRECT) solvedAttributes.add(HintType.GENERATION)
+            if (guess.evolutionaryStage.state == MatchState.CORRECT) solvedAttributes.add(HintType.EVOLUTIONARY_STAGE)
+            if (guess.types.state == MatchState.CORRECT) solvedAttributes.add(HintType.TYPES)
+            if (guess.height.state == MatchState.CORRECT) solvedAttributes.add(HintType.HEIGHT)
+            if (guess.weight.state == MatchState.CORRECT) solvedAttributes.add(HintType.WEIGHT)
+        }
+
+        // Available hints: not solved and not already revealed
+        val availableHints = HintType.entries.filter { it !in solvedAttributes && it !in alreadyRevealed }
+
+        if (availableHints.isNotEmpty()) {
+            val randomHint = availableHints.random()
+            _uiState.update { it.copy(revealedHints = it.revealedHints + randomHint) }
         }
     }
 }

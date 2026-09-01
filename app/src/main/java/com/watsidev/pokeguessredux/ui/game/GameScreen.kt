@@ -31,6 +31,7 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.watsidev.pokeguessredux.data.model.Pokemon
 import com.watsidev.pokeguessredux.domain.model.Direction
+import com.watsidev.pokeguessredux.domain.model.HintType
 import com.watsidev.pokeguessredux.domain.model.MatchState
 import com.watsidev.pokeguessredux.domain.model.PokemonComparison
 import com.watsidev.pokeguessredux.ui.theme.CorrectGreen
@@ -70,6 +71,20 @@ fun GameScreen(
                     }
                 },
                 actions = {
+                    val context = LocalContext.current
+                    val activity = context as? android.app.Activity
+                    if (activity != null && !uiState.isGameOver) {
+                        IconButton(
+                            onClick = { viewModel.onHintRequested(activity) },
+                            enabled = uiState.isAdAvailable
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lightbulb,
+                                contentDescription = "Get Hint",
+                                tint = if (uiState.isAdAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                            )
+                        }
+                    }
                     Text(
                         stringResource(R.string.streak, uiState.streak),
                         modifier = Modifier.padding(end = 16.dp),
@@ -108,6 +123,10 @@ fun GameContent(uiState: GameUiState, viewModel: GameViewModel) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             SearchSection(uiState, viewModel)
+            if (uiState.revealedHints.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                HintRibbon(uiState)
+            }
             Spacer(modifier = Modifier.height(16.dp))
             GuessList(guesses = uiState.guesses)
         }
@@ -301,6 +320,47 @@ fun VictoryModal(
             }
         }
     )
+}
+
+@Composable
+fun HintRibbon(uiState: GameUiState) {
+    val target = uiState.targetPokemon ?: return
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Lightbulb, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Unlocked Hints",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                uiState.revealedHints.forEach { hintType ->
+                    val value = when(hintType) {
+                        HintType.GENERATION -> target.generation.toString()
+                        HintType.EVOLUTIONARY_STAGE -> "S${target.evolutionaryStage}"
+                        HintType.TYPES -> target.types.joinToString("\n")
+                        HintType.HEIGHT -> "${target.height / 10.0}m"
+                        HintType.WEIGHT -> "${target.weight / 10.0}kg"
+                    }
+                    AttributeBox(
+                        label = stringResource(hintType.labelResId),
+                        value = value,
+                        state = MatchState.CORRECT
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

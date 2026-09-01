@@ -14,6 +14,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.watsidev.pokeguessredux.R
+import com.watsidev.pokeguessredux.ui.components.BannerAd
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +32,9 @@ fun GenerationScreen(
                     }
                 }
             )
+        },
+        bottomBar = {
+            BannerAd(adUnitId = "ca-app-pub-3940256099942544/6300978111")
         }
     ) { innerPadding ->
         LazyVerticalGrid(
