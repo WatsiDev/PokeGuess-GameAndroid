@@ -22,7 +22,8 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -92,6 +93,8 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.lottie.compose)
     implementation(libs.play.services.ads)
+    implementation(libs.google.app.update)
+    implementation(libs.google.app.update.ktx)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)
     testImplementation(libs.junit)

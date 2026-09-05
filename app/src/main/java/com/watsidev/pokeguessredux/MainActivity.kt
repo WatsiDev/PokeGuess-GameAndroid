@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -16,6 +17,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.watsidev.pokeguessredux.data.repository.PokemonRepository
 import com.watsidev.pokeguessredux.ui.game.GameMode
 import com.watsidev.pokeguessredux.ui.game.GameScreen
@@ -38,9 +44,23 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var repository: PokemonRepository
 
+    private lateinit var appUpdateManager: AppUpdateManager
+
+    private val updateLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK) {
+            Log.d("InAppUpdate", "Update flow failed or canceled. Result code: ${result.resultCode}")
+            checkForAppUpdate()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
+        appUpdateManager = AppUpdateManagerFactory.create(this)
+        checkForAppUpdate()
+
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         }
 
@@ -154,22 +174,6 @@ class MainActivity : ComponentActivity() {
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }
-                    composable("memory_difficulty") {
-                        MemoryDifficultyScreen(
-                            onDifficultySelected = { diff ->
-                                navController.navigate("memory_game/${diff.name}")
-                            },
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable("memory_game/{difficultyName}") { backStackEntry ->
-                        val diffName = backStackEntry.arguments?.getString("difficultyName") ?: "EASY"
-                        val difficulty = MemoryDifficulty.valueOf(diffName)
-                        MemoryGameScreen(
-                            difficulty = difficulty,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
                     composable("settings") {
                         SettingsScreen(
                             currentTheme = uiState.theme,
@@ -180,6 +184,41 @@ class MainActivity : ComponentActivity() {
                             onResetProgress = { viewModel.resetAllProgress() }
                         )
                     }
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        updateLauncher,
+                        AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+                    )
+                } catch (e: Exception) {
+                    Log.e("InAppUpdate", "Error resuming update flow", e)
+                }
+            }
+        }
+    }
+
+    private fun checkForAppUpdate() {
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        updateLauncher,
+                        AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+                    )
+                } catch (e: Exception) {
+                    Log.e("InAppUpdate", "Error starting update flow", e)
                 }
             }
         }

@@ -403,6 +403,6 @@ class GameViewModel @Inject constructor(
     }
 
     companion object {
-        const val SHINY_PROBABILITY = 1.0f //0.125f // 1 in 8 chance (12.5%). Set to 1.0f to test 100% shiny rate.
+        const val SHINY_PROBABILITY = 0.125f // 1 in 8 chance (12.5%). Set to 1.0f to test 100% shiny rate.
     }
 }
