@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
 
     <application
         android:name=".PokeGuessApplication"
@@ -18,7 +20,7 @@
         <!-- MY APP ID: ca-app-pub-9489490067134108~2811599779 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-9489490067134108~2811599779"/> <!-- Test: ca-app-pub-3940256099942544~3347511713 -->
+            android:value="ca-app-pub-3940256099942544~3347511713"/> <!-- Production: ca-app-pub-9489490067134108~2811599779 -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

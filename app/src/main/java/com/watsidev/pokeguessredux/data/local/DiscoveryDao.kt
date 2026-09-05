@@ -11,6 +11,9 @@ interface DiscoveryDao {
     @Query("SELECT * FROM discovered_pokemon")
     fun getAllDiscovered(): Flow<List<DiscoveryEntity>>
 
+    @Query("SELECT * FROM discovered_pokemon WHERE id = :id")
+    suspend fun getDiscoveryById(id: Int): DiscoveryEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertDiscovery(discovery: DiscoveryEntity)
 

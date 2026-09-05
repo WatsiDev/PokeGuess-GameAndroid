@@ -7,5 +7,8 @@ import androidx.room.PrimaryKey
 data class DiscoveryEntity(
     @PrimaryKey val id: Int,
     val name: String,
-    val discoveredAt: Long = System.currentTimeMillis()
+    val discoveredAt: Long = System.currentTimeMillis(),
+    val isShiny: Boolean = false,
+    val isDaily: Boolean = false,
+    val isNormal: Boolean = true
 )

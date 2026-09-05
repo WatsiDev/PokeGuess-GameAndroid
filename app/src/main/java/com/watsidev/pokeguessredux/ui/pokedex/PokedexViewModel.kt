@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.watsidev.pokeguessredux.data.local.DiscoveryEntity
 import com.watsidev.pokeguessredux.data.repository.PokemonRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -14,7 +15,9 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 data class PokedexUiState(
+    val discoveredMap: Map<Int, DiscoveryEntity> = emptyMap(),
     val discoveredIds: Set<Int> = emptySet(),
+    val shinyDiscoveredIds: Set<Int> = emptySet(),
     val totalPokemonCount: Int = 1025, // PokeAPI constant
     val isLoading: Boolean = false,
     val error: String? = null
@@ -46,12 +49,20 @@ class PokedexViewModel @Inject constructor(
     private fun loadDiscoveryData() {
         repository.getDiscoveredPokemon()
             .map { discovered -> 
-                // Move heavy set conversion to background thread
-                discovered.map { it.id }.toSet()
+                val map = discovered.associateBy { it.id }
+                val normalIds = discovered.filter { it.isNormal }.map { it.id }.toSet()
+                val shinyIds = discovered.filter { it.isShiny }.map { it.id }.toSet()
+                Triple(map, normalIds, shinyIds)
             }
             .flowOn(Dispatchers.Default)
-            .onEach { discoveredIds ->
-                _uiState.update { it.copy(discoveredIds = discoveredIds) }
+            .onEach { (map, normalIds, shinyIds) ->
+                _uiState.update { 
+                    it.copy(
+                        discoveredMap = map,
+                        discoveredIds = normalIds,
+                        shinyDiscoveredIds = shinyIds
+                    ) 
+                }
             }
             .catch { e ->
                 _uiState.update { it.copy(error = "Failed to load discovery data: ${e.message}") }

@@ -20,6 +20,8 @@ import com.watsidev.pokeguessredux.R
 fun SettingsScreen(
     currentTheme: String,
     onThemeSelected: (String) -> Unit,
+    vibrationsEnabled: Boolean = true,
+    onVibrationsToggled: (Boolean) -> Unit = {},
     onNavigateBack: () -> Unit,
     onResetProgress: () -> Unit
 ) {
@@ -55,6 +57,31 @@ fun SettingsScreen(
                 selectedTheme = currentTheme,
                 onThemeSelected = onThemeSelected
             )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                    Text(
+                        text = stringResource(R.string.vibrations),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.vibrations_subtitle),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = vibrationsEnabled,
+                    onCheckedChange = onVibrationsToggled
+                )
+            }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 

@@ -18,6 +18,6 @@ interface PokemonRepository {
     
     // Discovery
     fun getDiscoveredPokemon(): Flow<List<DiscoveryEntity>>
-    suspend fun markAsDiscovered(id: Int, name: String)
+    suspend fun markAsDiscovered(id: Int, name: String, isShiny: Boolean = false, isDaily: Boolean = false)
     suspend fun clearDiscovery()
 }

@@ -24,7 +24,7 @@ object DatabaseModule {
             PokeDatabase::class.java,
             "poke_database"
         )
-        .addMigrations(PokeDatabase.MIGRATION_3_4)
+        .addMigrations(PokeDatabase.MIGRATION_3_4, PokeDatabase.MIGRATION_4_5)
         .fallbackToDestructiveMigration()
         .build()
     }

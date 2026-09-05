@@ -81,8 +81,24 @@ class PokemonRepositoryImpl @Inject constructor(
         return discoveryDao.getAllDiscovered()
     }
 
-    override suspend fun markAsDiscovered(id: Int, name: String) {
-        discoveryDao.insertDiscovery(DiscoveryEntity(id, name))
+    override suspend fun markAsDiscovered(id: Int, name: String, isShiny: Boolean, isDaily: Boolean) {
+        val existing = discoveryDao.getDiscoveryById(id)
+        val updated = if (existing != null) {
+            existing.copy(
+                isNormal = existing.isNormal || !isShiny,
+                isShiny = existing.isShiny || isShiny,
+                isDaily = existing.isDaily || isDaily
+            )
+        } else {
+            DiscoveryEntity(
+                id = id,
+                name = name,
+                isNormal = !isShiny,
+                isShiny = isShiny,
+                isDaily = isDaily
+            )
+        }
+        discoveryDao.insertDiscovery(updated)
     }
 
     override suspend fun clearDiscovery() {
@@ -229,7 +245,7 @@ class PokemonRepositoryImpl @Inject constructor(
     private fun flattenEvolutionChain(link: ChainLink, language: String): List<EvolutionStep> {
         val steps = mutableListOf<EvolutionStep>()
         
-        fun processLink(current: ChainLink) {
+        fun processLink(current: ChainLink, parentId: Int?) {
             val id = current.species.url.split("/").filter { it.isNotEmpty() }.last().toInt()
             val detail = current.evolutionDetails?.firstOrNull()
             
@@ -258,13 +274,14 @@ class PokemonRepositoryImpl @Inject constructor(
                 name = current.species.name,
                 trigger = triggerName,
                 minLevel = detail?.minLevel,
-                imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
+                imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png",
+                parentId = parentId
             ))
             
-            current.evolvesTo.forEach { processLink(it) }
+            current.evolvesTo.forEach { processLink(it, parentId = id) }
         }
         
-        processLink(link)
+        processLink(link, parentId = null)
         return steps
     }
 

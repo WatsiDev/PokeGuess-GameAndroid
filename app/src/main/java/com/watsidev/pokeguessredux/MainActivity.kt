@@ -174,6 +174,8 @@ class MainActivity : ComponentActivity() {
                         SettingsScreen(
                             currentTheme = uiState.theme,
                             onThemeSelected = { viewModel.setTheme(it) },
+                            vibrationsEnabled = uiState.vibrationsEnabled,
+                            onVibrationsToggled = { viewModel.setVibrationsEnabled(it) },
                             onNavigateBack = { navController.popBackStack() },
                             onResetProgress = { viewModel.resetAllProgress() }
                         )

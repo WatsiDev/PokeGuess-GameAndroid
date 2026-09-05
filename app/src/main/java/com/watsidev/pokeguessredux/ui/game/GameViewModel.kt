@@ -31,6 +31,7 @@ data class GameUiState(
     val gameMode: GameMode = GameMode.DAILY,
     val selectedGeneration: Int? = null,
     val targetPokemon: Pokemon? = null,
+    val isTargetShiny: Boolean = false,
     val guesses: List<PokemonComparison> = emptyList(),
     val isGameOver: Boolean = false,
     val searchQuery: String = "",
@@ -43,6 +44,7 @@ data class GameUiState(
     val revealedHints: Set<HintType> = emptySet(),
     val isAdAvailable: Boolean = false,
     val theme: String = "system",
+    val vibrationsEnabled: Boolean = true,
     val shouldShowUpdateNotice: Boolean = false,
     val error: String? = null
 )
@@ -89,6 +91,13 @@ class GameViewModel @Inject constructor(
                 launch {
                     userPreferences.themePreference.collect { theme ->
                         _uiState.update { it.copy(theme = theme) }
+                    }
+                }
+
+                // Collect vibrations
+                launch {
+                    userPreferences.vibrationsEnabled.collect { enabled ->
+                        _uiState.update { it.copy(vibrationsEnabled = enabled) }
                     }
                 }
 
@@ -195,9 +204,20 @@ class GameViewModel @Inject constructor(
 
         val isGameOver = comparisons.any { it.name == target.name }
 
+        // If the daily game is already completed/discovered, check Room DB for actual shiny status
+        val discoveredList = repository.getDiscoveredPokemon().first()
+        val existingDiscovery = discoveredList.find { it.id == target.id }
+
+        val isShiny = if (isGameOver && existingDiscovery != null) {
+            existingDiscovery.isShiny
+        } else {
+            random.nextFloat() < SHINY_PROBABILITY
+        }
+
         _uiState.update { 
             it.copy(
                 targetPokemon = target,
+                isTargetShiny = isShiny,
                 guesses = comparisons.reversed(),
                 isGameOver = isGameOver
             ) 
@@ -207,7 +227,8 @@ class GameViewModel @Inject constructor(
     private suspend fun setupInfiniteGame() {
         val randomIndex = Random.nextInt(allPokemon.size)
         val target = repository.getPokemon(allPokemon[randomIndex].name)
-        _uiState.update { it.copy(targetPokemon = target) }
+        val isShiny = Random.nextFloat() < SHINY_PROBABILITY
+        _uiState.update { it.copy(targetPokemon = target, isTargetShiny = isShiny) }
     }
 
     private suspend fun setupGenerationGame(gen: Int) {
@@ -217,7 +238,8 @@ class GameViewModel @Inject constructor(
             if (genPokemon.isNotEmpty()) {
                 val randomIndex = Random.nextInt(genPokemon.size)
                 val target = repository.getPokemon(genPokemon[randomIndex].name)
-                _uiState.update { it.copy(targetPokemon = target, isLoading = false) }
+                val isShiny = Random.nextFloat() < SHINY_PROBABILITY
+                _uiState.update { it.copy(targetPokemon = target, isTargetShiny = isShiny, isLoading = false) }
             }
         } catch (e: Exception) {
             _uiState.update { it.copy(error = e.message, isLoading = false) }
@@ -287,13 +309,21 @@ class GameViewModel @Inject constructor(
                 }
 
                 if (isCorrect) {
-                    if (_uiState.value.gameMode == GameMode.DAILY) {
+                    val isDaily = _uiState.value.gameMode == GameMode.DAILY
+                    val isShiny = _uiState.value.isTargetShiny
+
+                    if (isDaily) {
                         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                         userPreferences.updateLastGuessDate(today)
                         userPreferences.updateStreak(_uiState.value.streak + 1)
                     }
                     userPreferences.addCapturedPokemon(target.id)
-                    repository.markAsDiscovered(target.id, target.name)
+                    repository.markAsDiscovered(
+                        id = target.id,
+                        name = target.name,
+                        isShiny = isShiny,
+                        isDaily = isDaily
+                    )
                 }
 
                 _uiState.update { 
@@ -322,6 +352,12 @@ class GameViewModel @Inject constructor(
     fun setTheme(theme: String) {
         viewModelScope.launch {
             userPreferences.updateTheme(theme)
+        }
+    }
+
+    fun setVibrationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.updateVibrations(enabled)
         }
     }
 
@@ -364,5 +400,9 @@ class GameViewModel @Inject constructor(
             val randomHint = availableHints.random()
             _uiState.update { it.copy(revealedHints = it.revealedHints + randomHint) }
         }
+    }
+
+    companion object {
+        const val SHINY_PROBABILITY = 1.0f //0.125f // 1 in 8 chance (12.5%). Set to 1.0f to test 100% shiny rate.
     }
 }

@@ -14,8 +14,8 @@ android {
         applicationId = "com.watsidev.pokeguessredux"
         minSdk = 24
         targetSdk = 37
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 6
+        versionName = "1.4.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -90,6 +90,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.play.services.location)
     implementation(libs.retrofit)
+    implementation(libs.lottie.compose)
     implementation(libs.play.services.ads)
     testImplementation(libs.androidx.core)
     testImplementation(libs.androidx.junit)

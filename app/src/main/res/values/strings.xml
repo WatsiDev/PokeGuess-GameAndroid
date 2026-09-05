@@ -42,6 +42,9 @@
     <string name="streak">Streak: %1$d</string>
     <string name="search_pokemon">Search Pokemon...</string>
     <string name="catch_success">CATCH SUCCESS!</string>
+    <string name="shiny_found">SHINY FOUND!</string>
+    <string name="shiny_badge">SHINY</string>
+    <string name="daily_badge">DAILY CATCH</string>
     <string name="play_again">Play Again</string>
     <string name="home">Home</string>
     <string name="next_pokemon_in">Next Pokémon in:</string>
@@ -79,6 +82,8 @@
 
     <!-- Settings Screen -->
     <string name="appearance">Appearance</string>
+    <string name="vibrations">Vibrations</string>
+    <string name="vibrations_subtitle">Enable tactile feedback when discovering Pokémon</string>
     <string name="system_default">System Default</string>
     <string name="light">Light</string>
     <string name="dark">Dark</string>

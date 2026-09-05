@@ -1,5 +1,6 @@
 package com.watsidev.pokeguessredux.ui.game
 
+import android.media.MediaPlayer
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -24,11 +25,16 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.watsidev.pokeguessredux.R
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
+import com.watsidev.pokeguessredux.R
 import com.watsidev.pokeguessredux.data.model.Pokemon
 import com.watsidev.pokeguessredux.domain.model.Direction
 import com.watsidev.pokeguessredux.domain.model.HintType
@@ -37,6 +43,9 @@ import com.watsidev.pokeguessredux.domain.model.PokemonComparison
 import com.watsidev.pokeguessredux.ui.theme.CorrectGreen
 import com.watsidev.pokeguessredux.ui.theme.IncorrectRed
 import com.watsidev.pokeguessredux.ui.theme.PartialYellow
+import com.watsidev.pokeguessredux.ui.utils.AudioHelper
+import com.watsidev.pokeguessredux.ui.utils.VibrationHelper
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +58,8 @@ fun GameScreen(
     if (uiState.isGameOver && uiState.targetPokemon != null) {
         VictoryModal(
             pokemon = uiState.targetPokemon!!,
+            isShiny = uiState.isTargetShiny,
+            vibrationsEnabled = uiState.vibrationsEnabled,
             gameMode = uiState.gameMode,
             timeUntilNext = uiState.timeUntilNext,
             onPlayAgain = { viewModel.setGameMode(GameMode.INFINITE) },
@@ -248,14 +259,54 @@ fun SearchBar(
     }
 }
 
+enum class EncounterStage {
+    ENCOUNTER,
+    REVEAL
+}
+
 @Composable
 fun VictoryModal(
     pokemon: Pokemon,
+    isShiny: Boolean = false,
+    vibrationsEnabled: Boolean = true,
     gameMode: GameMode,
     timeUntilNext: String,
     onPlayAgain: () -> Unit,
     onGoHome: () -> Unit
 ) {
+    val context = LocalContext.current
+    var encounterStage by remember(pokemon.id, isShiny) {
+        mutableStateOf(if (isShiny) EncounterStage.ENCOUNTER else EncounterStage.REVEAL)
+    }
+
+    val encounterComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.shiny_encounter))
+
+    // Phase 1: Shiny Encounter SFX + Vibration
+    LaunchedEffect(isShiny, encounterComposition) {
+        if (isShiny && encounterStage == EncounterStage.ENCOUNTER && encounterComposition != null) {
+            if (vibrationsEnabled) {
+                VibrationHelper.vibrateShinyLong(context)
+            }
+            try {
+                val sfxPlayer = MediaPlayer.create(context, R.raw.shiny_encounter_sound)
+                sfxPlayer?.setOnCompletionListener { mp -> mp.release() }
+                sfxPlayer?.start()
+            } catch (e: Exception) {
+                // Ignore audio error
+            }
+        }
+    }
+
+    // Phase 2 Audio: Play Pokémon Cry + Vibration ONLY when entering REVEAL stage
+    LaunchedEffect(encounterStage, pokemon.id) {
+        if (encounterStage == EncounterStage.REVEAL) {
+            AudioHelper.playPokemonCry(context, pokemon.id)
+            if (!isShiny && vibrationsEnabled) {
+                VibrationHelper.vibrateSmall(context)
+            }
+        }
+    }
+
     AlertDialog(
         onDismissRequest = { /* Modal is mandatory on win */ },
         confirmButton = {
@@ -271,9 +322,9 @@ fun VictoryModal(
         },
         title = {
             Text(
-                text = stringResource(R.string.catch_success),
+                text = if (isShiny) stringResource(R.string.shiny_found) else stringResource(R.string.catch_success),
                 fontWeight = FontWeight.Black,
-                color = CorrectGreen,
+                color = if (isShiny) Color(0xFFF57F17) else CorrectGreen,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
@@ -283,15 +334,112 @@ fun VictoryModal(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(pokemon.imageUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = pokemon.name,
-                    modifier = Modifier.size(160.dp),
-                    contentScale = ContentScale.Fit
-                )
+                Box(
+                    modifier = Modifier.size(180.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    when (encounterStage) {
+                        EncounterStage.ENCOUNTER -> {
+                            val encounterAnimState = animateLottieCompositionAsState(
+                                composition = encounterComposition,
+                                isPlaying = encounterComposition != null,
+                                iterations = 1
+                            )
+
+                            // Transition to REVEAL with 1s delay when encounter animation finishes
+                            LaunchedEffect(encounterComposition, encounterAnimState.isAtEnd, encounterAnimState.progress) {
+                                val comp = encounterComposition
+                                if (comp != null && (encounterAnimState.isAtEnd || encounterAnimState.progress >= 0.98f)) {
+                                    delay(5L)
+                                    encounterStage = EncounterStage.REVEAL
+                                }
+                            }
+
+                            LottieAnimation(
+                                composition = encounterComposition,
+                                progress = { encounterAnimState.progress },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        EncounterStage.REVEAL -> {
+                            val imageUrl = if (isShiny) {
+                                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${pokemon.id}.png"
+                            } else {
+                                pokemon.imageUrl
+                            }
+
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(imageUrl)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = pokemon.name,
+                                modifier = Modifier.size(160.dp),
+                                contentScale = ContentScale.Fit
+                            )
+
+                            if (isShiny) {
+                                val loopComposition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.shining_loop))
+                                LottieAnimation(
+                                    composition = loopComposition,
+                                    iterations = LottieConstants.IterateForever,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Badges
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (isShiny) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFFFF8E1),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFFD54F))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text("✨", fontSize = 12.sp)
+                                Text(
+                                    text = stringResource(R.string.shiny_badge),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = Color(0xFFF57F17)
+                                )
+                            }
+                        }
+                    }
+                    if (gameMode == GameMode.DAILY) {
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Text("📅", fontSize = 12.sp)
+                                Text(
+                                    text = stringResource(R.string.daily_badge),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = pokemon.name.replaceFirstChar { it.uppercase() },

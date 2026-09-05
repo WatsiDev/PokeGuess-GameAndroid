@@ -42,6 +42,9 @@
     <string name="streak">Racha: %1$d</string>
     <string name="search_pokemon">Buscar Pokémon…</string>
     <string name="catch_success">¡CAPTURA EXITOSA!</string>
+    <string name="shiny_found">¡SHINY ENCONTRADO!</string>
+    <string name="shiny_badge">SHINY</string>
+    <string name="daily_badge">CAPTURA DIARIA</string>
     <string name="play_again">Jugar de Nuevo</string>
     <string name="home">Inicio</string>
     <string name="next_pokemon_in">Siguiente Pokémon en:</string>
@@ -79,6 +82,8 @@
 
     <!-- Settings Screen -->
     <string name="appearance">Apariencia</string>
+    <string name="vibrations">Vibraciones</string>
+    <string name="vibrations_subtitle">Activar respuesta táctil al descubrir un Pokémon</string>
     <string name="system_default">Predeterminado del Sistema</string>
     <string name="light">Claro</string>
     <string name="dark">Oscuro</string>

@@ -25,6 +25,7 @@ class UserPreferencesRepository @Inject constructor(
     private val DAILY_GUESSES = stringPreferencesKey("daily_guesses")
     private val CAPTURED_POKEMON_IDS = stringPreferencesKey("captured_pokemon_ids")
     private val THEME_KEY = stringPreferencesKey("theme_preference")
+    private val VIBRATIONS_KEY = booleanPreferencesKey("vibrations_enabled")
     private val HAS_SHOWN_UPDATE_NOTICE = booleanPreferencesKey("has_shown_update_notice")
 
     val currentStreak: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -46,6 +47,10 @@ class UserPreferencesRepository @Inject constructor(
 
     val themePreference: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[THEME_KEY] ?: "system"
+    }
+
+    val vibrationsEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[VIBRATIONS_KEY] ?: true
     }
 
     val hasShownUpdateNotice: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -73,6 +78,12 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun updateTheme(theme: String) {
         context.dataStore.edit { preferences ->
             preferences[THEME_KEY] = theme
+        }
+    }
+
+    suspend fun updateVibrations(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[VIBRATIONS_KEY] = enabled
         }
     }
 

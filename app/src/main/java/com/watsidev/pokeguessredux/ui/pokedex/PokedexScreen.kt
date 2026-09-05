@@ -29,6 +29,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.watsidev.pokeguessredux.R
 import coil.request.ImageRequest
+import com.watsidev.pokeguessredux.data.local.DiscoveryEntity
 import com.watsidev.pokeguessredux.ui.components.BannerAd
 import java.util.Locale
 
@@ -62,7 +63,7 @@ fun PokedexScreen(
             )
         },
         bottomBar = {
-            BannerAd(adUnitId = "ca-app-pub-9489490067134108/5851253126") // Test: ca-app-pub-3940256099942544/6300978111
+            BannerAd(adUnitId = "ca-app-pub-3940256099942544/6300978111") // Production: ca-app-pub-9489490067134108/5851253126
         }
     ) { innerPadding ->
         when {
@@ -97,6 +98,7 @@ fun PokedexScreen(
                     ) {
                         DiscoveryProgress(
                             discovered = uiState.discoveredIds.size,
+                            shinyDiscovered = uiState.shinyDiscoveredIds.size,
                             total = uiState.totalPokemonCount
                         )
                     }
@@ -108,11 +110,11 @@ fun PokedexScreen(
                         val name = pagingItems[index]
                         if (name != null) {
                             val id = index + 1
-                            val isDiscovered = uiState.discoveredIds.contains(id)
+                            val discovery = uiState.discoveredMap[id]
                             PokedexEntry(
                                 id = id, 
                                 name = name, 
-                                isDiscovered = isDiscovered,
+                                discovery = discovery,
                                 onClick = { onPokemonClick(name) }
                             )
                         } else {
@@ -145,10 +147,12 @@ fun PokedexScreen(
 }
 
 @Composable
-fun DiscoveryProgress(discovered: Int, total: Int) {
+fun DiscoveryProgress(discovered: Int, shinyDiscovered: Int, total: Int) {
     val progress = if (total > 0) discovered.toFloat() / total else 0f
+    val shinyProgress = if (total > 0) shinyDiscovered.toFloat() / total else 0f
     
     Column(modifier = Modifier.padding(16.dp)) {
+        // Normal Progress
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -166,25 +170,61 @@ fun DiscoveryProgress(discovered: Int, total: Int) {
                 fontWeight = FontWeight.Black
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         LinearProgressIndicator(
             progress = { progress },
             modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
             color = MaterialTheme.colorScheme.primary,
             trackColor = MaterialTheme.colorScheme.primaryContainer
         )
-        Text(
-            text = stringResource(R.string.complete_percent, (progress * 100).toInt()),
-            style = MaterialTheme.typography.labelSmall,
-            modifier = Modifier.align(Alignment.End).padding(top = 4.dp)
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Shiny Progress
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text("✨", fontSize = 14.sp)
+                Text(
+                    "Shiny Pokémon Discovered",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFFF57F17)
+                )
+            }
+            Text(
+                "$shinyDiscovered / $total",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFFF57F17),
+                fontWeight = FontWeight.Black
+            )
+        }
+        Spacer(modifier = Modifier.height(6.dp))
+        LinearProgressIndicator(
+            progress = { shinyProgress },
+            modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)),
+            color = Color(0xFFFFB300),
+            trackColor = Color(0xFFFFF8E1)
         )
     }
 }
 
 @Composable
-fun PokedexEntry(id: Int, name: String, isDiscovered: Boolean, onClick: () -> Unit) {
-    // Official artwork URL construction
-    val imageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
+fun PokedexEntry(id: Int, name: String, discovery: DiscoveryEntity?, onClick: () -> Unit) {
+    val isDiscovered = discovery != null && (discovery.isNormal || discovery.isShiny)
+    val onlyShiny = discovery != null && discovery.isShiny && !discovery.isNormal
+
+    val imageUrl = if (onlyShiny) {
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/$id.png"
+    } else {
+        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$id.png"
+    }
     
     Card(
         modifier = Modifier
@@ -196,45 +236,62 @@ fun PokedexEntry(id: Int, name: String, isDiscovered: Boolean, onClick: () -> Un
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isDiscovered) 4.dp else 0.dp)
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = String.format(Locale.getDefault(), "#%03d", id),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isDiscovered) MaterialTheme.colorScheme.primary else Color.Gray,
-                    modifier = Modifier.align(Alignment.TopStart)
-                )
-                
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = if (isDiscovered) name else stringResource(R.string.undiscovered),
-                    modifier = Modifier.size(64.dp),
-                    colorFilter = if (!isDiscovered) ColorFilter.tint(Color.Black) else null,
-                    alpha = if (isDiscovered) 1f else 0.5f
-                )
+        Box(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+            // Badges overlay at Top End
+            if (discovery != null) {
+                Row(
+                    modifier = Modifier.align(Alignment.TopEnd),
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
+                ) {
+                    if (discovery.isShiny) {
+                        Text("✨", fontSize = 11.sp)
+                    }
+                    if (discovery.isDaily) {
+                        Text("📅", fontSize = 11.sp)
+                    }
+                }
             }
-            
-            if (isDiscovered) {
-                Text(
-                    text = name.replaceFirstChar { it.uppercase() },
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    fontSize = 10.sp
-                )
-            } else {
-                Text(
-                    text = "???",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray
-                )
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Text(
+                        text = String.format(Locale.getDefault(), "#%03d", id),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isDiscovered) MaterialTheme.colorScheme.primary else Color.Gray,
+                        modifier = Modifier.align(Alignment.TopStart)
+                    )
+                    
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(imageUrl)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = if (isDiscovered) name else stringResource(R.string.undiscovered),
+                        modifier = Modifier.size(60.dp),
+                        colorFilter = if (!isDiscovered) ColorFilter.tint(Color.Black) else null,
+                        alpha = if (isDiscovered) 1f else 0.5f
+                    )
+                }
+                
+                if (isDiscovered) {
+                    Text(
+                        text = name.replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        fontSize = 10.sp
+                    )
+                } else {
+                    Text(
+                        text = "???",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.Gray
+                    )
+                }
             }
         }
     }

@@ -24,5 +24,6 @@ data class EvolutionStep(
     val name: String,
     val trigger: String = "",
     val minLevel: Int? = null,
-    val imageUrl: String = ""
+    val imageUrl: String = "",
+    val parentId: Int? = null
 )
