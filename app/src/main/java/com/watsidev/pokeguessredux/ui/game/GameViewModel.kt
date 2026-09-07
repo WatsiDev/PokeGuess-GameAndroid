@@ -45,7 +45,10 @@ data class GameUiState(
     val isAdAvailable: Boolean = false,
     val theme: String = "system",
     val vibrationsEnabled: Boolean = true,
+    val dailyNotificationsEnabled: Boolean = true,
+    val streakNotificationsEnabled: Boolean = true,
     val shouldShowUpdateNotice: Boolean = false,
+    val shouldShowNotificationPermissionPrompt: Boolean = false,
     val error: String? = null
 )
 
@@ -98,6 +101,20 @@ class GameViewModel @Inject constructor(
                 launch {
                     userPreferences.vibrationsEnabled.collect { enabled ->
                         _uiState.update { it.copy(vibrationsEnabled = enabled) }
+                    }
+                }
+
+                // Collect daily notifications preference
+                launch {
+                    userPreferences.dailyNotificationsEnabled.collect { enabled ->
+                        _uiState.update { it.copy(dailyNotificationsEnabled = enabled) }
+                    }
+                }
+
+                // Collect streak notifications preference
+                launch {
+                    userPreferences.streakNotificationsEnabled.collect { enabled ->
+                        _uiState.update { it.copy(streakNotificationsEnabled = enabled) }
                     }
                 }
 
@@ -308,6 +325,7 @@ class GameViewModel @Inject constructor(
                     }
                 }
 
+                var shouldShowNotificationPrompt = false
                 if (isCorrect) {
                     val isDaily = _uiState.value.gameMode == GameMode.DAILY
                     val isShiny = _uiState.value.isTargetShiny
@@ -316,6 +334,10 @@ class GameViewModel @Inject constructor(
                         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                         userPreferences.updateLastGuessDate(today)
                         userPreferences.updateStreak(_uiState.value.streak + 1)
+                        val hasAsked = userPreferences.hasAskedNotificationPermission.first()
+                        if (!hasAsked) {
+                            shouldShowNotificationPrompt = true
+                        }
                     }
                     userPreferences.addCapturedPokemon(target.id)
                     repository.markAsDiscovered(
@@ -330,6 +352,7 @@ class GameViewModel @Inject constructor(
                     it.copy(
                         guesses = newGuesses,
                         isGameOver = isCorrect,
+                        shouldShowNotificationPermissionPrompt = shouldShowNotificationPrompt,
                         searchQuery = "",
                         searchResults = emptyList()
                     )
@@ -358,6 +381,25 @@ class GameViewModel @Inject constructor(
     fun setVibrationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPreferences.updateVibrations(enabled)
+        }
+    }
+
+    fun setDailyNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.updateDailyNotifications(enabled)
+        }
+    }
+
+    fun setStreakNotificationsEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            userPreferences.updateStreakNotifications(enabled)
+        }
+    }
+
+    fun dismissNotificationPermissionPrompt() {
+        viewModelScope.launch {
+            userPreferences.setNotificationPermissionAsked()
+            _uiState.update { it.copy(shouldShowNotificationPermissionPrompt = false) }
         }
     }
 

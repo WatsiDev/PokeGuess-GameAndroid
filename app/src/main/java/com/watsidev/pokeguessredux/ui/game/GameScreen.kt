@@ -37,6 +37,11 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.watsidev.pokeguessredux.R
 import com.watsidev.pokeguessredux.data.model.Pokemon
 import com.watsidev.pokeguessredux.domain.model.Direction
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import com.watsidev.pokeguessredux.ui.components.NotificationPermissionDialog
 import com.watsidev.pokeguessredux.domain.model.HintType
 import com.watsidev.pokeguessredux.domain.model.MatchState
 import com.watsidev.pokeguessredux.domain.model.PokemonComparison
@@ -146,6 +151,7 @@ fun GameContent(uiState: GameUiState, viewModel: GameViewModel) {
 
 @Composable
 fun SearchSection(uiState: GameUiState, viewModel: GameViewModel) {
+    val context = LocalContext.current
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = "Guess #${uiState.guesses.size + 1}",
@@ -158,7 +164,12 @@ fun SearchSection(uiState: GameUiState, viewModel: GameViewModel) {
             query = uiState.searchQuery,
             onQueryChanged = { viewModel.onSearchQueryChanged(it) },
             results = uiState.searchResults,
-            onResultSelected = { viewModel.makeGuess(it) },
+            onResultSelected = { name ->
+                if (uiState.vibrationsEnabled) {
+                    VibrationHelper.vibrateSmall(context)
+                }
+                viewModel.makeGuess(name)
+            },
             enabled = !uiState.isGameOver,
             isSearching = uiState.isSearching
         )

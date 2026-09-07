@@ -1,11 +1,15 @@
 package com.watsidev.pokeguessredux
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import com.watsidev.pokeguessredux.ui.components.NotificationPermissionDialog
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
@@ -87,6 +91,27 @@ class MainActivity : ComponentActivity() {
                             TextButton(onClick = { viewModel.dismissUpdateNotice() }) {
                                 Text(stringResource(R.string.ok))
                             }
+                        }
+                    )
+                }
+
+                val permissionLauncher = rememberLauncherForActivityResult(
+                    contract = ActivityResultContracts.RequestPermission()
+                ) { _ ->
+                    viewModel.dismissNotificationPermissionPrompt()
+                }
+
+                if (uiState.shouldShowNotificationPermissionPrompt) {
+                    NotificationPermissionDialog(
+                        onConfirm = {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                viewModel.dismissNotificationPermissionPrompt()
+                            }
+                        },
+                        onDismiss = {
+                            viewModel.dismissNotificationPermissionPrompt()
                         }
                     )
                 }
@@ -177,9 +202,13 @@ class MainActivity : ComponentActivity() {
                     composable("settings") {
                         SettingsScreen(
                             currentTheme = uiState.theme,
-                            onThemeSelected = { viewModel.setTheme(it) },
+                            onThemeSelected = { theme -> viewModel.setTheme(theme) },
                             vibrationsEnabled = uiState.vibrationsEnabled,
-                            onVibrationsToggled = { viewModel.setVibrationsEnabled(it) },
+                            onVibrationsToggled = { enabled -> viewModel.setVibrationsEnabled(enabled) },
+                            dailyNotificationsEnabled = uiState.dailyNotificationsEnabled,
+                            onDailyNotificationsToggled = { enabled -> viewModel.setDailyNotificationsEnabled(enabled) },
+                            streakNotificationsEnabled = uiState.streakNotificationsEnabled,
+                            onStreakNotificationsToggled = { enabled -> viewModel.setStreakNotificationsEnabled(enabled) },
                             onNavigateBack = { navController.popBackStack() },
                             onResetProgress = { viewModel.resetAllProgress() }
                         )

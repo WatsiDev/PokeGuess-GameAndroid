@@ -14,7 +14,12 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.appopen.AppOpenAd.AppOpenAdLoadCallback
+import androidx.glance.appwidget.updateAll
+import com.watsidev.pokeguessredux.widget.StreakGlanceWidget
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.Date
 
 @HiltAndroidApp
@@ -30,6 +35,11 @@ class PokeGuessApplication : Application(), Application.ActivityLifecycleCallbac
         MobileAds.initialize(this) {}
         ProcessLifecycleOwner.get().lifecycle.addObserver(this)
         appOpenAdManager = AppOpenAdManager()
+
+        com.watsidev.pokeguessredux.notifications.NotificationScheduler.scheduleDailyNotifications(this)
+        CoroutineScope(Dispatchers.IO).launch {
+            StreakGlanceWidget().updateAll(this@PokeGuessApplication)
+        }
     }
 
     /** LifecycleObserver method that shows the app open ad when the app moves to foreground. */

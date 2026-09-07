@@ -1,18 +1,27 @@
 package com.watsidev.pokeguessredux.ui.settings
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.watsidev.pokeguessredux.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -22,10 +31,32 @@ fun SettingsScreen(
     onThemeSelected: (String) -> Unit,
     vibrationsEnabled: Boolean = true,
     onVibrationsToggled: (Boolean) -> Unit = {},
+    dailyNotificationsEnabled: Boolean = true,
+    onDailyNotificationsToggled: (Boolean) -> Unit = {},
+    streakNotificationsEnabled: Boolean = true,
+    onStreakNotificationsToggled: (Boolean) -> Unit = {},
     onNavigateBack: () -> Unit,
     onResetProgress: () -> Unit
 ) {
     var showResetDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { _ -> }
+
+    fun checkAndRequestNotificationPermission(onGranted: () -> Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val permissionCheck = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            )
+            if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+        onGranted()
+    }
 
     Scaffold(
         topBar = {
@@ -43,6 +74,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -80,6 +112,81 @@ fun SettingsScreen(
                 Switch(
                     checked = vibrationsEnabled,
                     onCheckedChange = onVibrationsToggled
+                )
+            }
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text(
+                text = stringResource(R.string.settings_notifications_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                    Text(
+                        text = stringResource(R.string.settings_daily_notifications),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_daily_notifications_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = dailyNotificationsEnabled,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            checkAndRequestNotificationPermission {
+                                onDailyNotificationsToggled(true)
+                            }
+                        } else {
+                            onDailyNotificationsToggled(false)
+                        }
+                    }
+                )
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+                    Text(
+                        text = stringResource(R.string.settings_streak_notifications),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.settings_streak_notifications_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = streakNotificationsEnabled,
+                    onCheckedChange = { enabled ->
+                        if (enabled) {
+                            checkAndRequestNotificationPermission {
+                                onStreakNotificationsToggled(true)
+                            }
+                        } else {
+                            onStreakNotificationsToggled(false)
+                        }
+                    }
                 )
             }
 

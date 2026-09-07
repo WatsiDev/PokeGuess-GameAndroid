@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="80dp"
+    android:viewportWidth="300"
+    android:viewportHeight="120">
+
+    <!-- Base rounded dark purple background -->
+    <path
+        android:fillColor="#370655"
+        android:pathData="M16,0 H284 A16,16 0 0 1 300,16 V104 A16,16 0 0 1 284,120 H16 A16,16 0 0 1 0,104 V16 A16,16 0 0 1 16,0 Z" />
+
+    <!-- Top dark purple curved overlay -->
+    <path
+        android:fillColor="#370655"
+        android:pathData="M0,16 A16,16 0 0 1 16,0 H230 C200,35 240,50 300,30 V0 Z" />
+
+    <!-- Lighter purple wave overlay across bottom/center -->
+    <path
+        android:fillColor="#6D288A"
+        android:pathData="M0,50 C80,30 180,60 300,20 V104 A16,16 0 0 1 284,120 H16 A16,16 0 0 1 0,104 Z" />
+
+</vector>

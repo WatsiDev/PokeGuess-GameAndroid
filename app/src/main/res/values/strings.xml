@@ -58,6 +58,31 @@
     <!-- Pokedex Screen -->
     <string name="pokedex_title">POKÉDEX</string>
     <string name="discovery_progress">Discovery Progress</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_daily">Daily Notifications</string>
+    <string name="notification_channel_daily_desc">Notifications when a new daily Pokémon is available.</string>
+    <string name="notification_channel_streak">Streak Reminders</string>
+    <string name="notification_channel_streak_desc">Reminders to guess today\'s Pokémon and protect your streak.</string>
+    <string name="notification_daily_title">New Daily Pokémon!</string>
+    <string name="notification_daily_body">A new Pokémon is ready today. Open the app and test your knowledge!</string>
+    <string name="notification_streak_title">Protect your streak!</string>
+    <string name="notification_streak_body">You have a streak of %1$d days. Don\'t lose it, guess today\'s Pokémon before midnight!</string>
+    <string name="notification_streak_body_no_streak">Only a few hours left to guess today\'s Pokémon. Don\'t miss out!</string>
+
+    <!-- Settings Notifications -->
+    <string name="settings_notifications_title">Notifications</string>
+    <string name="settings_daily_notifications">Daily Challenge Notifications</string>
+    <string name="settings_daily_notifications_desc">Get notified when a new daily Pokémon is available.</string>
+    <string name="settings_streak_notifications">Streak Reminders</string>
+    <string name="settings_streak_notifications_desc">Remind me if I haven\'t played today to keep my streak.</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Streak Widget</string>
+    <string name="widget_streak_label">STREAK</string>
+    <string name="widget_current_streak">%1$d DAYS</string>
+    <string name="widget_status_completed">Completed today!</string>
+    <string name="widget_status_pending">Pending today!</string>
     <string name="complete_percent">%1$d%% Complete</string>
     <string name="no_pokemon_found">No Pokémon data found.</string>
     <string name="retry">Retry</string>
@@ -96,4 +121,10 @@
     <string name="reset">Reset</string>
     <string name="cancel">Cancel</string>
     <string name="version">Version %1$s</string>
+
+    <!-- Notification Permission Dialog -->
+    <string name="notification_prompt_title">Well done!</string>
+    <string name="notification_prompt_message">Do you want us to notify you tomorrow when a new Pokémon is available so you don\'t lose your streak?</string>
+    <string name="notification_prompt_confirm">Yes, notify me!</string>
+    <string name="notification_prompt_dismiss">Not now</string>
 </resources>

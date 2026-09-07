@@ -58,6 +58,31 @@
     <!-- Pokedex Screen -->
     <string name="pokedex_title">POKÉDEX</string>
     <string name="discovery_progress">Progreso de Descubrimiento</string>
+
+    <!-- Notifications -->
+    <string name="notification_channel_daily">Notificaciones Diarias</string>
+    <string name="notification_channel_daily_desc">Notificaciones cuando hay un nuevo Pokémon diario disponible.</string>
+    <string name="notification_channel_streak">Recordatorio de Racha</string>
+    <string name="notification_channel_streak_desc">Recordatorios para adivinar el Pokémon de hoy y salvar tu racha.</string>
+    <string name="notification_daily_title">¡Nuevo Pokémon Diario!</string>
+    <string name="notification_daily_body">¡Hay un nuevo Pokémon esperando hoy! Entra a adivinarlo ahora.</string>
+    <string name="notification_streak_title">¡Protege tu racha!</string>
+    <string name="notification_streak_body">Tienes una racha de %1$d días. ¡Adivina el Pokémon de hoy antes de medianoche para no perderla!</string>
+    <string name="notification_streak_body_no_streak">Quedan pocas horas para adivinar el Pokémon del día. ¡Entra antes de medianoche!</string>
+
+    <!-- Settings Notifications -->
+    <string name="settings_notifications_title">Notificaciones</string>
+    <string name="settings_daily_notifications">Aviso de Juego Diario</string>
+    <string name="settings_daily_notifications_desc">Recibe un aviso cuando esté disponible el nuevo Pokémon diario.</string>
+    <string name="settings_streak_notifications">Recordatorio de Racha</string>
+    <string name="settings_streak_notifications_desc">Avisarme si no he jugado hoy para mantener mi racha.</string>
+
+    <!-- Widget -->
+    <string name="widget_name">Widget de Racha</string>
+    <string name="widget_streak_label">RACHA</string>
+    <string name="widget_current_streak">%1$d DÍAS</string>
+    <string name="widget_status_completed">¡Completado hoy!</string>
+    <string name="widget_status_pending">¡Pendiente por adivinar!</string>
     <string name="complete_percent">%1$d%% Completado</string>
     <string name="no_pokemon_found">No se encontraron datos de Pokémon.</string>
     <string name="retry">Reintentar</string>
@@ -96,4 +121,10 @@
     <string name="reset">Reiniciar</string>
     <string name="cancel">Cancelar</string>
     <string name="version">Versión %1$s</string>
+
+    <!-- Notification Permission Dialog -->
+    <string name="notification_prompt_title">¡Bien hecho!</string>
+    <string name="notification_prompt_message">¿Quieres que te avisemos mañana cuando haya un nuevo Pokémon para que no pierdas tu racha?</string>
+    <string name="notification_prompt_confirm">Sí, avisarme</string>
+    <string name="notification_prompt_dismiss">Ahora no</string>
 </resources>

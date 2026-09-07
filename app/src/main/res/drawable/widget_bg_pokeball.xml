@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <!-- Bordes redondeados elegantes -->
+    <corners android:radius="24dp" />
+
+    <!-- Corte bicolor exacto al 50% -->
+    <gradient
+        android:angle="270"
+        android:centerColor="#202020"
+        android:centerY="0.5"
+        android:startColor="#E3350D"
+        android:endColor="#FFFFFF"
+        android:type="linear" />
+</shape>

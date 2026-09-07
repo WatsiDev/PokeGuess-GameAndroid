@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -27,6 +28,21 @@ class UserPreferencesRepository @Inject constructor(
     private val THEME_KEY = stringPreferencesKey("theme_preference")
     private val VIBRATIONS_KEY = booleanPreferencesKey("vibrations_enabled")
     private val HAS_SHOWN_UPDATE_NOTICE = booleanPreferencesKey("has_shown_update_notice")
+    private val DAILY_NOTIFICATIONS_KEY = booleanPreferencesKey("daily_notifications_enabled")
+    private val STREAK_NOTIFICATIONS_KEY = booleanPreferencesKey("streak_notifications_enabled")
+    private val HAS_ASKED_NOTIFICATION_PERMISSION = booleanPreferencesKey("has_asked_notification_permission")
+
+    val hasAskedNotificationPermission: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[HAS_ASKED_NOTIFICATION_PERMISSION] ?: false
+    }
+
+    val dailyNotificationsEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[DAILY_NOTIFICATIONS_KEY] ?: true
+    }
+
+    val streakNotificationsEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[STREAK_NOTIFICATIONS_KEY] ?: true
+    }
 
     val currentStreak: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[STREAK_KEY] ?: 0
@@ -61,12 +77,14 @@ class UserPreferencesRepository @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences[STREAK_KEY] = streak
         }
+        com.watsidev.pokeguessredux.widget.StreakGlanceWidget().updateAll(context)
     }
 
     suspend fun updateLastGuessDate(date: String) {
         context.dataStore.edit { preferences ->
             preferences[LAST_GUESS_DATE] = date
         }
+        com.watsidev.pokeguessredux.widget.StreakGlanceWidget().updateAll(context)
     }
 
     suspend fun updateDailyGuesses(guessesJson: String) {
@@ -87,9 +105,27 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    suspend fun updateDailyNotifications(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[DAILY_NOTIFICATIONS_KEY] = enabled
+        }
+    }
+
+    suspend fun updateStreakNotifications(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[STREAK_NOTIFICATIONS_KEY] = enabled
+        }
+    }
+
     suspend fun setUpdateNoticeShown() {
         context.dataStore.edit { preferences ->
             preferences[HAS_SHOWN_UPDATE_NOTICE] = true
+        }
+    }
+
+    suspend fun setNotificationPermissionAsked() {
+        context.dataStore.edit { preferences ->
+            preferences[HAS_ASKED_NOTIFICATION_PERMISSION] = true
         }
     }
 
@@ -112,6 +148,7 @@ class UserPreferencesRepository @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences.clear()
         }
+        com.watsidev.pokeguessredux.widget.StreakGlanceWidget().updateAll(context)
     }
 }
 
