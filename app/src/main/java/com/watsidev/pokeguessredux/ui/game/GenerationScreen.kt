@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.watsidev.pokeguessredux.R
+import com.watsidev.pokeguessredux.ad.AdConfig
 import com.watsidev.pokeguessredux.ui.components.BannerAd
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,7 +47,7 @@ fun GenerationScreen(
             )
         },
         bottomBar = {
-            BannerAd(adUnitId = "ca-app-pub-3940256099942544/6300978111") // Production: ca-app-pub-9489490067134108/3900254505
+            BannerAd(adUnitId = AdConfig.BANNER_GENERATION_ID)
         }
     ) { innerPadding ->
         LazyVerticalGrid(

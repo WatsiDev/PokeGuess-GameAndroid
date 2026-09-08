@@ -27,6 +27,10 @@ enum class GameMode {
     DAILY, INFINITE, GENERATION
 }
 
+enum class ShinyBonusType {
+    NONE, DOUBLE_RATE, FIFTY_PERCENT, GUARANTEED
+}
+
 data class GameUiState(
     val gameMode: GameMode = GameMode.DAILY,
     val selectedGeneration: Int? = null,
@@ -49,6 +53,10 @@ data class GameUiState(
     val streakNotificationsEnabled: Boolean = true,
     val shouldShowUpdateNotice: Boolean = false,
     val shouldShowNotificationPermissionPrompt: Boolean = false,
+    val activeShinyBonus: ShinyBonusType = ShinyBonusType.NONE,
+    val consumedMilestones: Set<Int> = emptySet(),
+    val shouldShowStreakSaverDialog: Boolean = false,
+    val brokenStreakToRestore: Int = 0,
     val error: String? = null
 )
 
@@ -79,7 +87,24 @@ class GameViewModel @Inject constructor(
                 // Collect streak
                 launch {
                     userPreferences.currentStreak.collect { streak ->
-                        _uiState.update { it.copy(streak = streak) }
+                        _uiState.update { 
+                            it.copy(
+                                streak = streak,
+                                activeShinyBonus = calculateActiveShinyBonus(streak, it.consumedMilestones)
+                            ) 
+                        }
+                    }
+                }
+
+                // Collect consumed milestones
+                launch {
+                    userPreferences.consumedMilestones.collect { consumed ->
+                        _uiState.update { 
+                            it.copy(
+                                consumedMilestones = consumed,
+                                activeShinyBonus = calculateActiveShinyBonus(it.streak, consumed)
+                            ) 
+                        }
                     }
                 }
 
@@ -187,6 +212,24 @@ class GameViewModel @Inject constructor(
         }
     }
 
+    private fun calculateActiveShinyBonus(streak: Int, consumedMilestones: Set<Int>): ShinyBonusType {
+        return when {
+            streak >= 30 && 30 !in consumedMilestones -> ShinyBonusType.GUARANTEED
+            streak >= 14 && 14 !in consumedMilestones -> ShinyBonusType.FIFTY_PERCENT
+            streak >= 7 && 7 !in consumedMilestones -> ShinyBonusType.DOUBLE_RATE
+            else -> ShinyBonusType.NONE
+        }
+    }
+
+    private fun getEffectiveShinyProbability(bonusType: ShinyBonusType): Float {
+        return when (bonusType) {
+            ShinyBonusType.GUARANTEED -> 1.0f
+            ShinyBonusType.FIFTY_PERCENT -> 0.50f
+            ShinyBonusType.DOUBLE_RATE -> 0.25f
+            ShinyBonusType.NONE -> SHINY_PROBABILITY
+        }
+    }
+
     private suspend fun setupDailyGame() {
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val lastDate = userPreferences.lastGuessDate.first()
@@ -197,7 +240,18 @@ class GameViewModel @Inject constructor(
             val yesterday = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
             
             if (lastDate != yesterday) {
-                userPreferences.updateStreak(0)
+                val previousStreak = userPreferences.currentStreak.first()
+                if (previousStreak > 0) {
+                    userPreferences.updateBrokenStreak(previousStreak)
+                    userPreferences.updateStreak(0)
+                    userPreferences.clearConsumedMilestones()
+                    _uiState.update { 
+                        it.copy(
+                            shouldShowStreakSaverDialog = true, 
+                            brokenStreakToRestore = previousStreak 
+                        ) 
+                    }
+                }
             }
             userPreferences.clearDailyData()
         }
@@ -225,10 +279,12 @@ class GameViewModel @Inject constructor(
         val discoveredList = repository.getDiscoveredPokemon().first()
         val existingDiscovery = discoveredList.find { it.id == target.id }
 
+        val effectiveProb = getEffectiveShinyProbability(_uiState.value.activeShinyBonus)
+
         val isShiny = if (isGameOver && existingDiscovery != null) {
             existingDiscovery.isShiny
         } else {
-            random.nextFloat() < SHINY_PROBABILITY
+            random.nextFloat() < effectiveProb
         }
 
         _uiState.update { 
@@ -244,7 +300,8 @@ class GameViewModel @Inject constructor(
     private suspend fun setupInfiniteGame() {
         val randomIndex = Random.nextInt(allPokemon.size)
         val target = repository.getPokemon(allPokemon[randomIndex].name)
-        val isShiny = Random.nextFloat() < SHINY_PROBABILITY
+        val effectiveProb = getEffectiveShinyProbability(_uiState.value.activeShinyBonus)
+        val isShiny = Random.nextFloat() < effectiveProb
         _uiState.update { it.copy(targetPokemon = target, isTargetShiny = isShiny) }
     }
 
@@ -255,7 +312,8 @@ class GameViewModel @Inject constructor(
             if (genPokemon.isNotEmpty()) {
                 val randomIndex = Random.nextInt(genPokemon.size)
                 val target = repository.getPokemon(genPokemon[randomIndex].name)
-                val isShiny = Random.nextFloat() < SHINY_PROBABILITY
+                val effectiveProb = getEffectiveShinyProbability(_uiState.value.activeShinyBonus)
+                val isShiny = Random.nextFloat() < effectiveProb
                 _uiState.update { it.copy(targetPokemon = target, isTargetShiny = isShiny, isLoading = false) }
             }
         } catch (e: Exception) {
@@ -339,6 +397,14 @@ class GameViewModel @Inject constructor(
                             shouldShowNotificationPrompt = true
                         }
                     }
+
+                    // Consume active shiny bonus if used
+                    val currentStreak = _uiState.value.streak
+                    val consumed = _uiState.value.consumedMilestones
+                    if (currentStreak >= 30 && 30 !in consumed) userPreferences.markMilestoneConsumed(30)
+                    else if (currentStreak >= 14 && 14 !in consumed) userPreferences.markMilestoneConsumed(14)
+                    else if (currentStreak >= 7 && 7 !in consumed) userPreferences.markMilestoneConsumed(7)
+
                     userPreferences.addCapturedPokemon(target.id)
                     repository.markAsDiscovered(
                         id = target.id,
@@ -393,6 +459,41 @@ class GameViewModel @Inject constructor(
     fun setStreakNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             userPreferences.updateStreakNotifications(enabled)
+        }
+    }
+
+    fun recoverStreakWithAd(activity: android.app.Activity) {
+        if (rewardedAdManager.isAdAvailable()) {
+            rewardedAdManager.showAd(activity) {
+                viewModelScope.launch {
+                    val broken = userPreferences.brokenStreak.first()
+                    if (broken > 0) {
+                        val calendar = Calendar.getInstance()
+                        calendar.add(Calendar.DAY_OF_YEAR, -1)
+                        val yesterday = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+
+                        userPreferences.updateStreak(broken)
+                        userPreferences.updateLastGuessDate(yesterday)
+                        userPreferences.clearBrokenStreak()
+                        _uiState.update { 
+                            it.copy(
+                                streak = broken,
+                                shouldShowStreakSaverDialog = false,
+                                brokenStreakToRestore = 0
+                            ) 
+                        }
+                    }
+                }
+            }
+        } else {
+            rewardedAdManager.loadAd()
+        }
+    }
+
+    fun dismissStreakSaverDialog() {
+        viewModelScope.launch {
+            userPreferences.clearBrokenStreak()
+            _uiState.update { it.copy(shouldShowStreakSaverDialog = false) }
         }
     }
 

@@ -119,6 +119,14 @@ class MainActivity : ComponentActivity() {
                 NavHost(navController = navController, startDestination = "home") {
                     composable("home") {
                         HomeScreen(
+                            currentStreak = uiState.streak,
+                            activeBonus = uiState.activeShinyBonus,
+                            consumedMilestones = uiState.consumedMilestones,
+                            shouldShowStreakSaverDialog = uiState.shouldShowStreakSaverDialog,
+                            brokenStreakToRestore = uiState.brokenStreakToRestore,
+                            isAdAvailable = uiState.isAdAvailable,
+                            onRestoreStreak = { activity: android.app.Activity -> viewModel.recoverStreakWithAd(activity) },
+                            onDismissStreakSaver = { viewModel.dismissStreakSaverDialog() },
                             onNavigateToDaily = {
                                 viewModel.setGameMode(GameMode.DAILY)
                                 navController.navigate("game")

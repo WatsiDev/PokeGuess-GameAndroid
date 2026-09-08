@@ -41,7 +41,9 @@ import android.Manifest
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.Share
 import com.watsidev.pokeguessredux.ui.components.NotificationPermissionDialog
+import com.watsidev.pokeguessredux.ui.components.ShareShinyDialog
 import com.watsidev.pokeguessredux.domain.model.HintType
 import com.watsidev.pokeguessredux.domain.model.MatchState
 import com.watsidev.pokeguessredux.domain.model.PokemonComparison
@@ -286,6 +288,7 @@ fun VictoryModal(
     onGoHome: () -> Unit
 ) {
     val context = LocalContext.current
+    var showShareShinyDialog by remember { mutableStateOf(false) }
     var encounterStage by remember(pokemon.id, isShiny) {
         mutableStateOf(if (isShiny) EncounterStage.ENCOUNTER else EncounterStage.REVEAL)
     }
@@ -476,9 +479,39 @@ fun VictoryModal(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
+                if (isShiny) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = { showShareShinyDialog = true },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF25D366)),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.share_shiny_button),
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                    }
+                }
             }
         }
     )
+
+    if (showShareShinyDialog) {
+        ShareShinyDialog(
+            pokemon = pokemon,
+            onDismiss = { showShareShinyDialog = false }
+        )
+    }
 }
 
 @Composable

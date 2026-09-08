@@ -15,6 +15,7 @@ import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.appopen.AppOpenAd.AppOpenAdLoadCallback
 import androidx.glance.appwidget.updateAll
+import com.watsidev.pokeguessredux.ad.AdConfig
 import com.watsidev.pokeguessredux.widget.StreakGlanceWidget
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
@@ -96,7 +97,7 @@ class PokeGuessApplication : Application(), Application.ActivityLifecycleCallbac
             val request = AdRequest.Builder().build()
             AppOpenAd.load(
                 this@PokeGuessApplication,
-                "ca-app-pub-3940256099942544/9257395921", // Production: ca-app-pub-9489490067134108/9339253176
+                AdConfig.APP_OPEN_AD_UNIT_ID,
                 request,
                 object : AppOpenAdLoadCallback() {
                     /**

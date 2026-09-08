@@ -31,6 +31,17 @@ class UserPreferencesRepository @Inject constructor(
     private val DAILY_NOTIFICATIONS_KEY = booleanPreferencesKey("daily_notifications_enabled")
     private val STREAK_NOTIFICATIONS_KEY = booleanPreferencesKey("streak_notifications_enabled")
     private val HAS_ASKED_NOTIFICATION_PERMISSION = booleanPreferencesKey("has_asked_notification_permission")
+    private val BROKEN_STREAK_KEY = intPreferencesKey("broken_streak")
+    private val CONSUMED_MILESTONES_KEY = stringPreferencesKey("consumed_milestones")
+
+    val brokenStreak: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[BROKEN_STREAK_KEY] ?: 0
+    }
+
+    val consumedMilestones: Flow<Set<Int>> = context.dataStore.data.map { preferences ->
+        val stringVal = preferences[CONSUMED_MILESTONES_KEY] ?: ""
+        if (stringVal.isEmpty()) emptySet() else stringVal.split(",").mapNotNull { it.toIntOrNull() }.toSet()
+    }
 
     val hasAskedNotificationPermission: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[HAS_ASKED_NOTIFICATION_PERMISSION] ?: false
@@ -126,6 +137,33 @@ class UserPreferencesRepository @Inject constructor(
     suspend fun setNotificationPermissionAsked() {
         context.dataStore.edit { preferences ->
             preferences[HAS_ASKED_NOTIFICATION_PERMISSION] = true
+        }
+    }
+
+    suspend fun updateBrokenStreak(streak: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[BROKEN_STREAK_KEY] = streak
+        }
+    }
+
+    suspend fun clearBrokenStreak() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(BROKEN_STREAK_KEY)
+        }
+    }
+
+    suspend fun markMilestoneConsumed(milestone: Int) {
+        context.dataStore.edit { preferences ->
+            val current = (preferences[CONSUMED_MILESTONES_KEY] ?: "").split(",")
+                .filter { it.isNotEmpty() }.toMutableSet()
+            current.add(milestone.toString())
+            preferences[CONSUMED_MILESTONES_KEY] = current.joinToString(",")
+        }
+    }
+
+    suspend fun clearConsumedMilestones() {
+        context.dataStore.edit { preferences ->
+            preferences.remove(CONSUMED_MILESTONES_KEY)
         }
     }
 

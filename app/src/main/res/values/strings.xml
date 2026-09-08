@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">PokeGuess Redux</string>
+    <string name="admob_app_id" translatable="false">ca-app-pub-3940256099942544~3347511713</string> <!-- Prod: ca-app-pub-9489490067134108~2811599779 -->
 
     <!-- Home Screen -->
     <string name="home_title">POKEGUESS REDUX</string>
@@ -127,4 +128,28 @@
     <string name="notification_prompt_message">Do you want us to notify you tomorrow when a new Pokémon is available so you don\'t lose your streak?</string>
     <string name="notification_prompt_confirm">Yes, notify me!</string>
     <string name="notification_prompt_dismiss">Not now</string>
+
+    <!-- Streak Rewards &amp; Milestones -->
+    <string name="streak_rewards_title">Streak &amp; Rewards</string>
+    <string name="next_reward_in">Next reward in %1$d days</string>
+    <string name="milestone_7_desc">7 Days: 2x Shiny Chance</string>
+    <string name="milestone_14_desc">14 Days: 50% Shiny Chance</string>
+    <string name="milestone_30_desc">30 Days: 100% Guaranteed Shiny</string>
+    <string name="active_bonus_2x">ACTIVE: 2x Shiny Chance on next game!</string>
+    <string name="active_bonus_50">ACTIVE: 50% Shiny Chance on next game!</string>
+    <string name="active_bonus_100">ACTIVE: 100% Guaranteed Shiny on next game!</string>
+
+    <!-- Streak Saver -->
+    <string name="streak_saver_title">Streak Broken!</string>
+    <string name="streak_saver_body">You lost your streak of %1$d days. Watch an ad to restore your streak and keep your progress!</string>
+    <string name="streak_saver_confirm">Restore Streak (Watch Ad)</string>
+    <string name="streak_saver_dismiss">Reset Streak</string>
+
+    <!-- Viral Sharing -->
+    <string name="share_app_button">Invite Friends</string>
+    <string name="share_app_subtitle">Share PokeGuess Redux with your friends</string>
+    <string name="share_app_message">Test your Pokémon knowledge on PokeGuess Redux! Play the Daily Challenge and keep your streak. Download here: https://play.google.com/store/apps/details?id=com.watsidev.pokeguessredux</string>
+    <string name="share_shiny_button">Share Shiny Capture</string>
+    <string name="share_shiny_title">SHINY CAPTURED!</string>
+    <string name="share_shiny_message">✨ I caught a SHINY %1$s in PokeGuess Redux! 🌟 Can you beat my streak? Download the app here: https://play.google.com/store/apps/details?id=com.watsidev.pokeguessredux</string>
 </resources>

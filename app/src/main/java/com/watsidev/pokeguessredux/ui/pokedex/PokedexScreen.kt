@@ -28,6 +28,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.watsidev.pokeguessredux.R
+import com.watsidev.pokeguessredux.ad.AdConfig
 import coil.request.ImageRequest
 import com.watsidev.pokeguessredux.data.local.DiscoveryEntity
 import com.watsidev.pokeguessredux.ui.components.BannerAd
@@ -63,7 +64,7 @@ fun PokedexScreen(
             )
         },
         bottomBar = {
-            BannerAd(adUnitId = "ca-app-pub-3940256099942544/6300978111") // Production: ca-app-pub-9489490067134108/5851253126
+            BannerAd(adUnitId = AdConfig.BANNER_POKEDEX_ID)
         }
     ) { innerPadding ->
         when {

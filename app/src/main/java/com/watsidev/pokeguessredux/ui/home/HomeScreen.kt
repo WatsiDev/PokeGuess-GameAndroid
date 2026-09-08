@@ -1,5 +1,6 @@
 package com.watsidev.pokeguessredux.ui.home
 
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -30,12 +33,23 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.watsidev.pokeguessredux.BuildConfig
 import com.watsidev.pokeguessredux.R
+import com.watsidev.pokeguessredux.ad.AdConfig
 import com.watsidev.pokeguessredux.ui.components.BannerAd
+import com.watsidev.pokeguessredux.ui.components.StreakSaverDialog
+import com.watsidev.pokeguessredux.ui.game.ShinyBonusType
 import com.watsidev.pokeguessredux.ui.utils.BottomCurvedShape
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    currentStreak: Int = 0,
+    activeBonus: ShinyBonusType = ShinyBonusType.NONE,
+    consumedMilestones: Set<Int> = emptySet(),
+    shouldShowStreakSaverDialog: Boolean = false,
+    brokenStreakToRestore: Int = 0,
+    isAdAvailable: Boolean = false,
+    onRestoreStreak: (android.app.Activity) -> Unit = {},
+    onDismissStreakSaver: () -> Unit = {},
     onNavigateToDaily: () -> Unit,
     onNavigateToInfinite: () -> Unit,
     onNavigateToGenerations: () -> Unit,
@@ -43,6 +57,22 @@ fun HomeScreen(
     onNavigateToPokedex: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
+    val context = LocalContext.current
+
+    if (shouldShowStreakSaverDialog) {
+        val activity = context as? android.app.Activity
+        StreakSaverDialog(
+            brokenStreak = brokenStreakToRestore,
+            isAdAvailable = isAdAvailable,
+            onRestoreClicked = {
+                if (activity != null) {
+                    onRestoreStreak(activity)
+                }
+            },
+            onDismiss = onDismissStreakSaver
+        )
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -107,6 +137,14 @@ fun HomeScreen(
                     icon = Icons.Default.Today,
                     onClick = onNavigateToDaily
                 )
+
+                // Streak & Milestone Rewards Card
+                StreakRewardsCard(
+                    currentStreak = currentStreak,
+                    activeBonus = activeBonus,
+                    consumedMilestones = consumedMilestones
+                )
+
                 HomeCard(
                     title = stringResource(R.string.infinite_mode),
                     subtitle = stringResource(R.string.infinite_mode_subtitle),
@@ -140,6 +178,20 @@ fun HomeScreen(
                     onClick = onNavigateToPokedex
                 )
                 HomeCard(
+                    title = stringResource(R.string.share_app_button),
+                    subtitle = stringResource(R.string.share_app_subtitle),
+                    icon = Icons.Default.Share,
+                    onClick = {
+                        val sendIntent = Intent().apply {
+                            action = Intent.ACTION_SEND
+                            putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_app_message))
+                            type = "text/plain"
+                        }
+                        val shareIntent = Intent.createChooser(sendIntent, context.getString(R.string.share_app_button))
+                        context.startActivity(shareIntent)
+                    }
+                )
+                HomeCard(
                     title = stringResource(R.string.settings),
                     subtitle = stringResource(R.string.settings_subtitle),
                     icon = Icons.Default.Settings,
@@ -154,7 +206,7 @@ fun HomeScreen(
                     color = MaterialTheme.colorScheme.outline
                 )
                 
-                BannerAd(adUnitId = "ca-app-pub-3940256099942544/6300978111") // Production: ca-app-pub-9489490067134108/7404385243
+                BannerAd(adUnitId = AdConfig.BANNER_HOME_ID)
                 
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -221,6 +273,13 @@ fun HomeCard(
 @Composable
 fun HomeScreenPreview() {
     MaterialTheme {
-        HomeScreen({}, {}, {}, {}, {}, {})
+        HomeScreen(
+            onNavigateToDaily = {},
+            onNavigateToInfinite = {},
+            onNavigateToGenerations = {},
+            onNavigateToMemory = {},
+            onNavigateToPokedex = {},
+            onNavigateToSettings = {}
+        )
     }
 }

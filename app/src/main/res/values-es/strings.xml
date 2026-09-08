@@ -127,4 +127,28 @@
     <string name="notification_prompt_message">¿Quieres que te avisemos mañana cuando haya un nuevo Pokémon para que no pierdas tu racha?</string>
     <string name="notification_prompt_confirm">Sí, avisarme</string>
     <string name="notification_prompt_dismiss">Ahora no</string>
+
+    <!-- Streak Rewards &amp; Milestones -->
+    <string name="streak_rewards_title">Rachas y Recompensas</string>
+    <string name="next_reward_in">Próxima recompensa en %1$d días</string>
+    <string name="milestone_7_desc">7 Días: Probabilidad Shiny x2</string>
+    <string name="milestone_14_desc">14 Días: 50% Probabilidad Shiny</string>
+    <string name="milestone_30_desc">30 Días: Shiny 100% Garantizado</string>
+    <string name="active_bonus_2x">¡ACTIVO: Probabilidad Shiny x2 en tu próxima partida!</string>
+    <string name="active_bonus_50">¡ACTIVO: 50% Probabilidad Shiny en tu próxima partida!</string>
+    <string name="active_bonus_100">¡ACTIVO: Shiny 100% Garantizado en tu próxima partida!</string>
+
+    <!-- Streak Saver -->
+    <string name="streak_saver_title">¡Racha Perdida!</string>
+    <string name="streak_saver_body">Has perdido tu racha de %1$d días. ¡Mira un anuncio para recuperarla y mantener tu progreso!</string>
+    <string name="streak_saver_confirm">Recuperar Racha (Ver Anuncio)</string>
+    <string name="streak_saver_dismiss">Aceptar y Reiniciar</string>
+
+    <!-- Viral Sharing -->
+    <string name="share_app_button">Invitar Amigos</string>
+    <string name="share_app_subtitle">Comparte PokeGuess Redux con tus amigos</string>
+    <string name="share_app_message">¡Demuestra tus conocimientos Pokémon en PokeGuess Redux! Juega el Desafío Diario y mantén tu racha. Descárgalo aquí: https://play.google.com/store/apps/details?id=com.watsidev.pokeguessredux</string>
+    <string name="share_shiny_button">Compartir Captura Shiny</string>
+    <string name="share_shiny_title">¡POKÉMON SHINY CAPTURADO!</string>
+    <string name="share_shiny_message">✨ ¡He capturado un %1$s SHINY en PokeGuess Redux! 🌟 ¿Podrás superar mi racha? Descarga la app aquí: https://play.google.com/store/apps/details?id=com.watsidev.pokeguessredux</string>
 </resources>

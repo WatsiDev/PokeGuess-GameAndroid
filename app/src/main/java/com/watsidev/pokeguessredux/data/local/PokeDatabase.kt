@@ -27,6 +27,7 @@ abstract class PokeDatabase : RoomDatabase() {
             }
         }
 
+        // Migration 4 to 5: Agregado soporte para Pokémon Shinies y tracking diario (Release Date: 2026-09-08, Version Code: 6)
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE discovered_pokemon ADD COLUMN isShiny INTEGER NOT NULL DEFAULT 0")

@@ -22,7 +22,7 @@
         <!-- MY APP ID: ca-app-pub-9489490067134108~2811599779 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/> <!-- Production: ca-app-pub-9489490067134108~2811599779 -->
+            android:value="@string/admob_app_id"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -45,5 +45,15 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/streak_widget_info" />
         </receiver>
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 </manifest>
