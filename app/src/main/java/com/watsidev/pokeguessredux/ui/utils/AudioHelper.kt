@@ -4,9 +4,16 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.net.Uri
+import android.util.Log
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object AudioHelper {
-    fun playPokemonCry(context: Context, pokemonId: Int) {
+@Singleton
+class AudioHelper @Inject constructor(
+    @ApplicationContext private val context: Context
+) {
+    fun playPokemonCry(pokemonId: Int) {
         try {
             val cryUrl = "https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/$pokemonId.ogg"
             val mediaPlayer = MediaPlayer().apply {
@@ -30,7 +37,13 @@ object AudioHelper {
                 }
             }
         } catch (e: Exception) {
-            // Ignore cry play errors
+            Log.e("AudioHelper", "Error playing Pokémon cry for ID: $pokemonId", e)
+        }
+    }
+
+    companion object {
+        fun playPokemonCry(context: Context, pokemonId: Int) {
+            AudioHelper(context).playPokemonCry(pokemonId)
         }
     }
 }

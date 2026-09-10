@@ -83,7 +83,7 @@ fun StreakRewardsCard(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = if (currentStreak >= 30) "¡Máximo nivel de racha!" else stringResource(R.string.next_reward_in, nextMilestone - currentStreak),
+                            text = if (currentStreak >= 30) stringResource(R.string.max_streak_level) else stringResource(R.string.next_reward_in, nextMilestone - currentStreak),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -208,12 +208,12 @@ fun MilestoneItem(
                 modifier = Modifier.size(20.dp)
             )
             Text(
-                text = "$days Días",
+                text = stringResource(R.string.days_format, days),
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = if (isConsumed) "Usado" else title,
+                text = if (isConsumed) stringResource(R.string.consumed) else title,
                 style = MaterialTheme.typography.labelSmall,
                 color = if (isConsumed) MaterialTheme.colorScheme.outline else iconColor,
                 fontSize = 10.sp

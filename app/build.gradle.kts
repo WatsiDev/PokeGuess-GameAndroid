@@ -14,8 +14,8 @@ android {
         applicationId = "com.watsidev.pokeguessredux"
         minSdk = 24
         targetSdk = 37
-        versionCode = 6
-        versionName = "1.4.1"
+        versionCode = 10
+        versionName = "1.4.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -2,13 +2,13 @@ package com.watsidev.pokeguessredux.data.local
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import androidx.glance.appwidget.updateAll
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -19,7 +19,8 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 @Singleton
 class UserPreferencesRepository @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val widgetUpdater: com.watsidev.pokeguessredux.widget.StreakWidgetUpdater = com.watsidev.pokeguessredux.widget.StreakWidgetUpdater(context)
 ) {
     private val STREAK_KEY = intPreferencesKey("current_streak")
     private val LAST_GUESS_DATE = stringPreferencesKey("last_guess_date")
@@ -39,8 +40,7 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     val consumedMilestones: Flow<Set<Int>> = context.dataStore.data.map { preferences ->
-        val stringVal = preferences[CONSUMED_MILESTONES_KEY] ?: ""
-        if (stringVal.isEmpty()) emptySet() else stringVal.split(",").mapNotNull { it.toIntOrNull() }.toSet()
+        preferences.getIntSet(CONSUMED_MILESTONES_KEY)
     }
 
     val hasAskedNotificationPermission: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -68,8 +68,7 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     val capturedPokemonIds: Flow<Set<Int>> = context.dataStore.data.map { preferences ->
-        val idsString = preferences[CAPTURED_POKEMON_IDS] ?: ""
-        if (idsString.isEmpty()) emptySet() else idsString.split(",").mapNotNull { it.toIntOrNull() }.toSet()
+        preferences.getIntSet(CAPTURED_POKEMON_IDS)
     }
 
     val themePreference: Flow<String> = context.dataStore.data.map { preferences ->
@@ -88,14 +87,14 @@ class UserPreferencesRepository @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences[STREAK_KEY] = streak
         }
-        com.watsidev.pokeguessredux.widget.StreakGlanceWidget().updateAll(context)
+        widgetUpdater.updateWidget()
     }
 
     suspend fun updateLastGuessDate(date: String) {
         context.dataStore.edit { preferences ->
             preferences[LAST_GUESS_DATE] = date
         }
-        com.watsidev.pokeguessredux.widget.StreakGlanceWidget().updateAll(context)
+        widgetUpdater.updateWidget()
     }
 
     suspend fun updateDailyGuesses(guessesJson: String) {
@@ -152,12 +151,25 @@ class UserPreferencesRepository @Inject constructor(
         }
     }
 
+    private fun Preferences.getIntSet(key: Preferences.Key<String>): Set<Int> {
+        val stringVal = this[key] ?: return emptySet()
+        if (stringVal.isBlank()) return emptySet()
+        return stringVal.split(",")
+            .mapNotNull { it.trim().toIntOrNull() }
+            .toSet()
+    }
+
+    private fun MutablePreferences.addIntToSet(key: Preferences.Key<String>, value: Int) {
+        val currentSet = this[key]?.split(",")
+            ?.mapNotNull { it.trim().toIntOrNull() }
+            ?.toMutableSet() ?: mutableSetOf()
+        currentSet.add(value)
+        this[key] = currentSet.joinToString(",")
+    }
+
     suspend fun markMilestoneConsumed(milestone: Int) {
         context.dataStore.edit { preferences ->
-            val current = (preferences[CONSUMED_MILESTONES_KEY] ?: "").split(",")
-                .filter { it.isNotEmpty() }.toMutableSet()
-            current.add(milestone.toString())
-            preferences[CONSUMED_MILESTONES_KEY] = current.joinToString(",")
+            preferences.addIntToSet(CONSUMED_MILESTONES_KEY, milestone)
         }
     }
 
@@ -169,10 +181,7 @@ class UserPreferencesRepository @Inject constructor(
 
     suspend fun addCapturedPokemon(id: Int) {
         context.dataStore.edit { preferences ->
-            val currentIds = (preferences[CAPTURED_POKEMON_IDS] ?: "").split(",")
-                .filter { it.isNotEmpty() }.toMutableSet()
-            currentIds.add(id.toString())
-            preferences[CAPTURED_POKEMON_IDS] = currentIds.joinToString(",")
+            preferences.addIntToSet(CAPTURED_POKEMON_IDS, id)
         }
     }
 
@@ -186,7 +195,7 @@ class UserPreferencesRepository @Inject constructor(
         context.dataStore.edit { preferences ->
             preferences.clear()
         }
-        com.watsidev.pokeguessredux.widget.StreakGlanceWidget().updateAll(context)
+        widgetUpdater.updateWidget()
     }
 }
 

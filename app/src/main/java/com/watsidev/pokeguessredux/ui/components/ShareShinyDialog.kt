@@ -1,6 +1,7 @@
 package com.watsidev.pokeguessredux.ui.components
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,6 +10,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -28,21 +30,24 @@ fun ShareShinyDialog(
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
-    val pokemonNameFormatted = pokemon.name.replaceFirstChar { it.uppercase() }
-    val shinyImageUrl = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${pokemon.id}.png"
+    val pokemonNameFormatted = remember(pokemon.name) { pokemon.name.replaceFirstChar { it.uppercase() } }
+    val shinyImageUrl = remember(pokemon.id) { "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${pokemon.id}.png" }
     val shareMessage = stringResource(R.string.share_shiny_message, pokemonNameFormatted)
 
     fun triggerShare() {
-        // TODO: In a future update, enable image sharing via FileProvider (shiny_${pokemon.id}.png)
-        // using Intent.EXTRA_STREAM and type = "image/png".
-        val sendIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            putExtra(Intent.EXTRA_TEXT, shareMessage)
-            type = "text/plain"
+        try {
+            val sendIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, shareMessage)
+                type = "text/plain"
+            }
+            val shareIntent = Intent.createChooser(sendIntent, context.getString(R.string.share_shiny_button))
+            context.startActivity(shareIntent)
+        } catch (e: Exception) {
+            Log.e("ShareShinyDialog", "Failed to start share intent", e)
+        } finally {
+            onDismiss()
         }
-        val shareIntent = Intent.createChooser(sendIntent, context.getString(R.string.share_shiny_button))
-        context.startActivity(shareIntent)
-        onDismiss()
     }
 
     AlertDialog(

@@ -65,9 +65,6 @@ class MainActivity : ComponentActivity() {
         appUpdateManager = AppUpdateManagerFactory.create(this)
         checkForAppUpdate()
 
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-        }
-
         enableEdgeToEdge()
         setContent {
             val viewModel: GameViewModel = hiltViewModel()
@@ -81,20 +78,6 @@ class MainActivity : ComponentActivity() {
 
             MyApplicationTheme(darkTheme = darkTheme) {
                 val navController = rememberNavController()
-
-                if (uiState.shouldShowUpdateNotice) {
-                    AlertDialog(
-                        onDismissRequest = { },
-                        title = { Text(stringResource(R.string.update_notice_title)) },
-                        text = { Text(stringResource(R.string.update_notice_message)) },
-                        confirmButton = {
-                            TextButton(onClick = { viewModel.dismissUpdateNotice() }) {
-                                Text(stringResource(R.string.ok))
-                            }
-                        }
-                    )
-                }
-
                 val permissionLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestPermission()
                 ) { _ ->
@@ -125,7 +108,7 @@ class MainActivity : ComponentActivity() {
                             shouldShowStreakSaverDialog = uiState.shouldShowStreakSaverDialog,
                             brokenStreakToRestore = uiState.brokenStreakToRestore,
                             isAdAvailable = uiState.isAdAvailable,
-                            onRestoreStreak = { activity: android.app.Activity -> viewModel.recoverStreakWithAd(activity) },
+                            onRestoreStreak = { viewModel.recoverStreakWithAd(this@MainActivity) },
                             onDismissStreakSaver = { viewModel.dismissStreakSaverDialog() },
                             onNavigateToDaily = {
                                 viewModel.setGameMode(GameMode.DAILY)
@@ -173,22 +156,6 @@ class MainActivity : ComponentActivity() {
                     composable("game") {
                         GameScreen(
                             viewModel = viewModel,
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable("memory_difficulty") {
-                        MemoryDifficultyScreen(
-                            onDifficultySelected = { diff ->
-                                navController.navigate("memory_game/${diff.name}")
-                            },
-                            onNavigateBack = { navController.popBackStack() }
-                        )
-                    }
-                    composable("memory_game/{difficultyName}") { backStackEntry ->
-                        val diffName = backStackEntry.arguments?.getString("difficultyName") ?: "EASY"
-                        val difficulty = MemoryDifficulty.valueOf(diffName)
-                        MemoryGameScreen(
-                            difficulty = difficulty,
                             onNavigateBack = { navController.popBackStack() }
                         )
                     }

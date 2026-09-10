@@ -1,5 +1,6 @@
 package com.watsidev.pokeguessredux.ui.game
 
+import androidx.compose.runtime.Immutable
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,6 +21,7 @@ enum class MemoryDifficulty(val pairs: Int, val timeSeconds: Int) {
     MASTER(18, 150)
 }
 
+@Immutable
 data class MemoryCard(
     val id: Int,
     val pokemonId: Int,
@@ -29,6 +31,7 @@ data class MemoryCard(
     val isMatched: Boolean = false
 )
 
+@Immutable
 data class MemoryGameState(
     val cards: List<MemoryCard> = emptyList(),
     val flippedCards: List<MemoryCard> = emptyList(),
@@ -90,6 +93,7 @@ class MemoryGameViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
+                android.util.Log.e("MemoryGameViewModel", "Error starting memory game", e)
                 _uiState.update { it.copy(isLoading = false) }
             }
         }

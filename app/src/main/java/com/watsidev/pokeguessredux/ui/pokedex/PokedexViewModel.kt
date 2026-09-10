@@ -1,5 +1,6 @@
 package com.watsidev.pokeguessredux.ui.pokedex
 
+import androidx.compose.runtime.Immutable
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,6 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+@Immutable
 data class PokedexUiState(
     val discoveredMap: Map<Int, DiscoveryEntity> = emptyMap(),
     val discoveredIds: Set<Int> = emptySet(),

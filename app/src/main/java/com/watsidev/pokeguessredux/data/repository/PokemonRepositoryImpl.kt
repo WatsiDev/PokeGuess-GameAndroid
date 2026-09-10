@@ -82,37 +82,19 @@ class PokemonRepositoryImpl @Inject constructor(
     }
 
     override suspend fun markAsDiscovered(id: Int, name: String, isShiny: Boolean, isDaily: Boolean) {
-        val existing = discoveryDao.getDiscoveryById(id)
-        val updated = if (existing != null) {
-            existing.copy(
-                isNormal = existing.isNormal || !isShiny,
-                isShiny = existing.isShiny || isShiny,
-                isDaily = existing.isDaily || isDaily
-            )
-        } else {
-            DiscoveryEntity(
-                id = id,
-                name = name,
-                isNormal = !isShiny,
-                isShiny = isShiny,
-                isDaily = isDaily
-            )
-        }
-        discoveryDao.insertDiscovery(updated)
+        discoveryDao.upsertDiscovery(id, name, isShiny, isDaily)
     }
 
     override suspend fun clearDiscovery() {
         discoveryDao.clearAll()
     }
 
-    override suspend fun getPokemon(name: String): Pokemon {
+    override suspend fun getPokemon(name: String): Pokemon = withContext(Dispatchers.IO) {
         val currentLanguage = Locale.getDefault().language
         
         // 1. Check Memory Cache
         pokemonCache[name]?.let { 
-            // We can't easily check language in memory without model update, 
-            // but Room check will handle it if we clear cache or just trust Room.
-            return it 
+            return@withContext it 
         }
 
         // 2. Check Room DB
@@ -120,68 +102,76 @@ class PokemonRepositoryImpl @Inject constructor(
         if (localPokemon != null && localPokemon.languageCode == currentLanguage) {
             val pokemon = mapEntityToModel(localPokemon)
             pokemonCache[name] = pokemon
-            return pokemon
+            return@withContext pokemon
         }
 
         // 3. Fetch from API
-        return try {
+        try {
             val response = apiService.getPokemon(name)
             
-            // Extract species name from response
-            val speciesName = response.species.name
-            val speciesResponse = apiService.getPokemonSpecies(speciesName)
-            
-            // Fetch evolution chain
-            val evolutionChainUrl = speciesResponse.evolutionChain.url
-            val chainId = evolutionChainUrl.split("/").filter { it.isNotEmpty() }.last()
-            val evolutionChain = apiService.getEvolutionChain(chainId)
-            
-            val stage = findEvolutionStage(evolutionChain.chain, response.name)
-            
-            // Localized Category
-            val category = speciesResponse.genera.find { it.language.name == currentLanguage }?.genus 
-                ?: speciesResponse.genera.find { it.language.name == "en" }?.genus 
-                ?: ""
+            coroutineScope {
+                val speciesName = response.species.name
+                val speciesDeferred = async { apiService.getPokemonSpecies(speciesName) }
+                val statsDeferred = response.stats.map { statSlot ->
+                    async {
+                        val statId = statSlot.stat.url.split("/").filter { it.isNotEmpty() }.last()
+                        val statDetail = try {
+                            apiService.getStat(statId)
+                        } catch (e: Exception) {
+                            null
+                        }
+                        val localizedName = statDetail?.names?.find { it.language.name == currentLanguage }?.name
+                            ?: statDetail?.names?.find { it.language.name == "en" }?.name
+                            ?: statSlot.stat.name
+                        
+                        PokemonStat(localizedName, statSlot.baseStat)
+                    }
+                }
 
-            // Localized Stats
-            val localizedStats = response.stats.map { statSlot ->
-                val statId = statSlot.stat.url.split("/").filter { it.isNotEmpty() }.last()
-                val statDetail = apiService.getStat(statId)
-                val localizedName = statDetail.names.find { it.language.name == currentLanguage }?.name
-                    ?: statDetail.names.find { it.language.name == "en" }?.name
-                    ?: statSlot.stat.name
+                val speciesResponse = speciesDeferred.await()
+                val evolutionChainUrl = speciesResponse.evolutionChain.url
+                val chainId = evolutionChainUrl.split("/").filter { it.isNotEmpty() }.last()
+                val evolutionChainDeferred = async { apiService.getEvolutionChain(chainId) }
+
+                val evolutionChain = evolutionChainDeferred.await()
+                val localizedStats = statsDeferred.awaitAll()
+
+                val stage = findEvolutionStage(evolutionChain.chain, response.name)
                 
-                PokemonStat(localizedName, statSlot.baseStat)
+                // Localized Category
+                val category = speciesResponse.genera.find { it.language.name == currentLanguage }?.genus 
+                    ?: speciesResponse.genera.find { it.language.name == "en" }?.genus 
+                    ?: ""
+
+                // Localized Evolution Steps
+                val evolutionSteps = flattenEvolutionChain(evolutionChain.chain, currentLanguage)
+
+                val genName = speciesResponse.generation.name
+                val genNumber = parseGeneration(genName)
+
+                val pokemon = Pokemon(
+                    id = response.id,
+                    name = response.name,
+                    height = response.height,
+                    weight = response.weight,
+                    types = response.types.map { it.type.name },
+                    evolutionaryStage = stage,
+                    generation = genNumber,
+                    imageUrl = response.sprites.other.officialArtwork.frontDefault,
+                    category = category,
+                    stats = localizedStats,
+                    evolutionChain = evolutionSteps
+                )
+                
+                // 4. Save to Room
+                pokemonDao.insertPokemon(mapModelToEntity(pokemon, currentLanguage))
+                
+                pokemonCache[name] = pokemon
+                pokemon
             }
-
-            // Localized Evolution Steps
-            val evolutionSteps = flattenEvolutionChain(evolutionChain.chain, currentLanguage)
-
-            val genName = speciesResponse.generation.name
-            val genNumber = parseGeneration(genName)
-
-            val pokemon = Pokemon(
-                id = response.id,
-                name = response.name,
-                height = response.height,
-                weight = response.weight,
-                types = response.types.map { it.type.name },
-                evolutionaryStage = stage,
-                generation = genNumber,
-                imageUrl = response.sprites.other.officialArtwork.frontDefault,
-                category = category,
-                stats = localizedStats,
-                evolutionChain = evolutionSteps
-            )
-            
-            // 4. Save to Room
-            pokemonDao.insertPokemon(mapModelToEntity(pokemon, currentLanguage))
-            
-            pokemonCache[name] = pokemon
-            pokemon
         } catch (e: Exception) {
             Log.e("Repo", "Error fetching Pokémon details for $name", e)
-            Pokemon(id = 0, name = name, height = 0, weight = 0, types = emptyList(), evolutionaryStage = 1, generation = 0, imageUrl = null)
+            throw e
         }
     }
 
@@ -242,27 +232,22 @@ class PokemonRepositoryImpl @Inject constructor(
         return -1
     }
 
-    private fun flattenEvolutionChain(link: ChainLink, language: String): List<EvolutionStep> {
+    private suspend fun flattenEvolutionChain(link: ChainLink, language: String): List<EvolutionStep> = coroutineScope {
         val steps = mutableListOf<EvolutionStep>()
         
-        fun processLink(current: ChainLink, parentId: Int?) {
+        suspend fun processLink(current: ChainLink, parentId: Int?) {
             val id = current.species.url.split("/").filter { it.isNotEmpty() }.last().toInt()
             val detail = current.evolutionDetails?.firstOrNull()
             
             var triggerName = detail?.trigger?.name ?: ""
             if (triggerName.isNotEmpty()) {
-                // Fetch localized trigger name
-                // Note: In a production app, we might want to pre-fetch all triggers 
-                // or cache them specifically to avoid many network calls here.
-                runBlocking {
+                val triggerId = detail?.trigger?.url?.split("/")?.filter { it.isNotEmpty() }?.last()
+                if (triggerId != null) {
                     try {
-                        val triggerId = detail?.trigger?.url?.split("/")?.filter { it.isNotEmpty() }?.last()
-                        if (triggerId != null) {
-                            val triggerDetail = apiService.getEvolutionTrigger(triggerId)
-                            triggerName = triggerDetail.names.find { it.language.name == language }?.name
-                                ?: triggerDetail.names.find { it.language.name == "en" }?.name
-                                ?: triggerName
-                        }
+                        val triggerDetail = apiService.getEvolutionTrigger(triggerId)
+                        triggerName = triggerDetail.names.find { it.language.name == language }?.name
+                            ?: triggerDetail.names.find { it.language.name == "en" }?.name
+                            ?: triggerName
                     } catch (e: Exception) {
                         // Keep original triggerName
                     }
@@ -278,11 +263,13 @@ class PokemonRepositoryImpl @Inject constructor(
                 parentId = parentId
             ))
             
-            current.evolvesTo.forEach { processLink(it, parentId = id) }
+            for (next in current.evolvesTo) {
+                processLink(next, parentId = id)
+            }
         }
         
         processLink(link, parentId = null)
-        return steps
+        steps
     }
 
     override suspend fun getPokemonDetailsParallel(names: List<String>): List<Pokemon> = coroutineScope {

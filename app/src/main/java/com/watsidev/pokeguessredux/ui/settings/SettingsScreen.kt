@@ -22,6 +22,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.watsidev.pokeguessredux.BuildConfig
 import com.watsidev.pokeguessredux.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -237,7 +238,7 @@ fun SettingsScreen(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = stringResource(R.string.version, "1.0.0"),
+                    text = stringResource(R.string.version, BuildConfig.VERSION_NAME),
                     style = MaterialTheme.typography.bodySmall
                 )
                 Text(

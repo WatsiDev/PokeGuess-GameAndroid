@@ -152,4 +152,7 @@
     <string name="share_shiny_button">Share Shiny Capture</string>
     <string name="share_shiny_title">SHINY CAPTURED!</string>
     <string name="share_shiny_message">✨ I caught a SHINY %1$s in PokeGuess Redux! 🌟 Can you beat my streak? Download the app here: https://play.google.com/store/apps/details?id=com.watsidev.pokeguessredux</string>
+    <string name="max_streak_level">Max streak level!</string>
+    <string name="days_format">%1$d Days</string>
+    <string name="consumed">Used</string>
 </resources>

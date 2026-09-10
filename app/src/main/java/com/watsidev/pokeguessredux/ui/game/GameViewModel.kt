@@ -1,5 +1,6 @@
 package com.watsidev.pokeguessredux.ui.game
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.watsidev.pokeguessredux.ad.RewardedAdManager
@@ -12,10 +13,12 @@ import com.watsidev.pokeguessredux.domain.model.MatchState
 import com.watsidev.pokeguessredux.domain.model.PokemonComparison
 import com.watsidev.pokeguessredux.domain.usecase.ComparePokemonUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.text.SimpleDateFormat
@@ -31,6 +34,7 @@ enum class ShinyBonusType {
     NONE, DOUBLE_RATE, FIFTY_PERCENT, GUARANTEED
 }
 
+@Immutable
 data class GameUiState(
     val gameMode: GameMode = GameMode.DAILY,
     val selectedGeneration: Int? = null,
@@ -60,6 +64,21 @@ data class GameUiState(
     val error: String? = null
 )
 
+private data class PrefGroup1(
+    val streak: Int,
+    val consumed: Set<Int>,
+    val captured: Set<Int>,
+    val theme: String
+)
+
+private data class PrefGroup2(
+    val vibs: Boolean,
+    val dailyNotifs: Boolean,
+    val streakNotifs: Boolean,
+    val updateNoticeShown: Boolean,
+    val adAvailable: Boolean
+)
+
 @HiltViewModel
 class GameViewModel @Inject constructor(
     private val repository: PokemonRepository,
@@ -84,84 +103,46 @@ class GameViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = true) }
                 allPokemon = repository.getPokemonList()
                 
-                // Collect streak
-                launch {
-                    userPreferences.currentStreak.collect { streak ->
-                        _uiState.update { 
-                            it.copy(
-                                streak = streak,
-                                activeShinyBonus = calculateActiveShinyBonus(streak, it.consumedMilestones)
-                            ) 
-                        }
-                    }
+                // Combine user preferences flows reactively into uiState
+                val group1Flow = combine(
+                    userPreferences.currentStreak,
+                    userPreferences.consumedMilestones,
+                    userPreferences.capturedPokemonIds,
+                    userPreferences.themePreference
+                ) { streak, consumed, captured, theme ->
+                    PrefGroup1(streak, consumed, captured, theme)
                 }
 
-                // Collect consumed milestones
-                launch {
-                    userPreferences.consumedMilestones.collect { consumed ->
-                        _uiState.update { 
-                            it.copy(
-                                consumedMilestones = consumed,
-                                activeShinyBonus = calculateActiveShinyBonus(it.streak, consumed)
-                            ) 
-                        }
-                    }
+                val group2Flow = combine(
+                    userPreferences.vibrationsEnabled,
+                    userPreferences.dailyNotificationsEnabled,
+                    userPreferences.streakNotificationsEnabled,
+                    userPreferences.hasShownUpdateNotice,
+                    rewardedAdManager.isAdAvailable
+                ) { vibs, dailyNotifs, streakNotifs, updateNoticeShown, adAvailable ->
+                    PrefGroup2(vibs, dailyNotifs, streakNotifs, updateNoticeShown, adAvailable)
                 }
 
-                // Collect captured IDs
-                launch {
-                    userPreferences.capturedPokemonIds.collect { ids ->
-                        _uiState.update { it.copy(capturedIds = ids) }
+                combine(group1Flow, group2Flow) { g1, g2 ->
+                    _uiState.update { current ->
+                        current.copy(
+                            streak = g1.streak,
+                            consumedMilestones = g1.consumed,
+                            activeShinyBonus = calculateActiveShinyBonus(g1.streak, g1.consumed),
+                            capturedIds = g1.captured,
+                            theme = g1.theme,
+                            vibrationsEnabled = g2.vibs,
+                            dailyNotificationsEnabled = g2.dailyNotifs,
+                            streakNotificationsEnabled = g2.streakNotifs,
+                            shouldShowUpdateNotice = !g2.updateNoticeShown,
+                            isAdAvailable = g2.adAvailable
+                        )
                     }
-                }
-
-                // Collect theme
-                launch {
-                    userPreferences.themePreference.collect { theme ->
-                        _uiState.update { it.copy(theme = theme) }
-                    }
-                }
-
-                // Collect vibrations
-                launch {
-                    userPreferences.vibrationsEnabled.collect { enabled ->
-                        _uiState.update { it.copy(vibrationsEnabled = enabled) }
-                    }
-                }
-
-                // Collect daily notifications preference
-                launch {
-                    userPreferences.dailyNotificationsEnabled.collect { enabled ->
-                        _uiState.update { it.copy(dailyNotificationsEnabled = enabled) }
-                    }
-                }
-
-                // Collect streak notifications preference
-                launch {
-                    userPreferences.streakNotificationsEnabled.collect { enabled ->
-                        _uiState.update { it.copy(streakNotificationsEnabled = enabled) }
-                    }
-                }
-
-                // Collect notice state
-                launch {
-                    userPreferences.hasShownUpdateNotice.collect { shown ->
-                        _uiState.update { it.copy(shouldShowUpdateNotice = !shown) }
-                    }
-                }
-
-                // Monitor ad availability reactively
-                launch {
-                    rewardedAdManager.isAdAvailable.collect { available ->
-                        _uiState.update { it.copy(isAdAvailable = available) }
-                    }
-                }
+                }.launchIn(this)
 
                 // Initial setup for Daily mode
                 setupDailyGame()
                 startTimeUntilNextUpdate()
-
-            } catch (e: Exception) {
 
             } catch (e: Exception) {
                 _uiState.update { it.copy(error = e.message) }
@@ -339,9 +320,11 @@ class GameViewModel @Inject constructor(
                         allPokemon
                     }
 
-                    val shortResults = filteredList.filter {
-                        it.name.contains(query, ignoreCase = true) 
-                    }.take(10)
+                    val shortResults = withContext(Dispatchers.Default) {
+                        filteredList.filter {
+                            it.name.contains(query, ignoreCase = true) 
+                        }.take(10)
+                    }
                     
                     if (shortResults.isNotEmpty()) {
                         // repository.getPokemonDetailsParallel will check Room for each Pokemon

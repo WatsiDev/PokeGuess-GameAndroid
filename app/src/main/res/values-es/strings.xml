@@ -150,5 +150,8 @@
     <string name="share_app_message">¡Demuestra tus conocimientos Pokémon en PokeGuess Redux! Juega el Desafío Diario y mantén tu racha. Descárgalo aquí: https://play.google.com/store/apps/details?id=com.watsidev.pokeguessredux</string>
     <string name="share_shiny_button">Compartir Captura Shiny</string>
     <string name="share_shiny_title">¡POKÉMON SHINY CAPTURADO!</string>
-    <string name="share_shiny_message">✨ ¡He capturado un %1$s SHINY en PokeGuess Redux! 🌟 ¿Podrás superar mi racha? Descarga la app aquí: https://play.google.com/store/apps/details?id=com.watsidev.pokeguessredux</string>
+    <string name="share_shiny_message">✨ ¡He capturado un %1$s SHINY en PokeGuess Redux! 🌟 ¿Podrás superar mi racha? Descarga la app aquí: https://play.google.com/store/apps/details?id=com.watsidev/pokeguessredux</string>
+    <string name="max_streak_level">¡Máximo nivel de racha!</string>
+    <string name="days_format">%1$d Días</string>
+    <string name="consumed">Usado</string>
 </resources>

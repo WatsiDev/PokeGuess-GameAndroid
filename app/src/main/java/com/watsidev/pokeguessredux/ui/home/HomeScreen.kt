@@ -48,7 +48,7 @@ fun HomeScreen(
     shouldShowStreakSaverDialog: Boolean = false,
     brokenStreakToRestore: Int = 0,
     isAdAvailable: Boolean = false,
-    onRestoreStreak: (android.app.Activity) -> Unit = {},
+    onRestoreStreak: () -> Unit = {},
     onDismissStreakSaver: () -> Unit = {},
     onNavigateToDaily: () -> Unit,
     onNavigateToInfinite: () -> Unit,
@@ -60,15 +60,10 @@ fun HomeScreen(
     val context = LocalContext.current
 
     if (shouldShowStreakSaverDialog) {
-        val activity = context as? android.app.Activity
         StreakSaverDialog(
             brokenStreak = brokenStreakToRestore,
             isAdAvailable = isAdAvailable,
-            onRestoreClicked = {
-                if (activity != null) {
-                    onRestoreStreak(activity)
-                }
-            },
+            onRestoreClicked = onRestoreStreak,
             onDismiss = onDismissStreakSaver
         )
     }
@@ -182,13 +177,17 @@ fun HomeScreen(
                     subtitle = stringResource(R.string.share_app_subtitle),
                     icon = Icons.Default.Share,
                     onClick = {
-                        val sendIntent = Intent().apply {
-                            action = Intent.ACTION_SEND
-                            putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_app_message))
-                            type = "text/plain"
+                        try {
+                            val sendIntent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_app_message))
+                                type = "text/plain"
+                            }
+                            val shareIntent = Intent.createChooser(sendIntent, context.getString(R.string.share_app_button))
+                            context.startActivity(shareIntent)
+                        } catch (e: Exception) {
+                            android.util.Log.e("HomeScreen", "Error launching share app intent", e)
                         }
-                        val shareIntent = Intent.createChooser(sendIntent, context.getString(R.string.share_app_button))
-                        context.startActivity(shareIntent)
                     }
                 )
                 HomeCard(
